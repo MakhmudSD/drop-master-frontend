@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scraper API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .platform-btn { padding: 15px 30px; margin: 10px; border: none; border-radius: 5px; cursor: pointer; }
+        .coupang-btn { background: #ff6b35; color: white; }
+        .naver-btn { background: #03c75a; color: white; }
+        .11st-btn { background: #ff6600; color: white; }
+        .aliexpress-btn { background: #ff6600; color: white; }
+        .alibaba-btn { background: #ff6600; color: white; }
+        .product-card { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px; }
+        .product-image { width: 100px; height: 100px; object-fit: cover; border-radius: 4px; }
+        .product-info { margin-left: 15px; }
+        .loading { color: #666; font-style: italic; }
+    </style>
+</head>
+<body>
+    <h1>Scraper API Test</h1>
+    
+    <div class="test-section">
+        <h2>API Health Check</h2>
+        <button onclick="checkHealth()">Check API Health</button>
+        <button onclick="checkStatus()">Check API Status</button>
+        <div id="health-info"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Platform Tests</h2>
+        <p>Test scraping from different platforms:</p>
+        <button class="platform-btn coupang-btn" onclick="testPlatform('coupang')">Test Coupang</button>
+        <button class="platform-btn naver-btn" onclick="testPlatform('naver')">Test Naver</button>
+        <button class="platform-btn 11st-btn" onclick="testPlatform('11st')">Test 11st</button>
+        <button class="platform-btn aliexpress-btn" onclick="testPlatform('aliexpress')">Test AliExpress</button>
+        <button class="platform-btn alibaba-btn" onclick="testPlatform('alibaba')">Test Alibaba</button>
+        <button onclick="testAllPlatforms()">Test All Platforms</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Custom Test</h2>
+        <p>Test with custom keywords:</p>
+        <input type="text" id="keywords" placeholder="Enter keywords (comma separated)" style="width: 300px; padding: 8px;">
+        <input type="number" id="maxResults" placeholder="Max results" value="5" style="width: 100px; padding: 8px;">
+        <select id="platform" style="padding: 8px;">
+            <option value="coupang">Coupang</option>
+            <option value="naver">Naver</option>
+            <option value="11st">11st</option>
+            <option value="aliexpress">AliExpress</option>
+            <option value="alibaba">Alibaba</option>
+        </select>
+        <button onclick="testCustom()">Test Custom</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3001/api';
+        
+        function updateStatus(message, type = 'info') {
+            const healthDiv = document.getElementById('health-info');
+            healthDiv.innerHTML = `<span class="${type}">${message}</span>`;
+        }
+
+        function updateResults(html) {
+            document.getElementById('results').innerHTML = html;
+        }
+
+        function showLoading(message = 'Loading...') {
+            updateResults(`<div class="loading">${message}</div>`);
+        }
+
+        async function checkHealth() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/scraper-test/health`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateStatus(`Health Check: ${data.message}`, data.healthy ? 'success' : 'error');
+                } else {
+                    updateStatus(`Health Check Failed: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                updateStatus(`Health Check Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkStatus() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/scraper-test/status`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateStatus(`Status: ${JSON.stringify(data.status, null, 2)}`, 'info');
+                } else {
+                    updateStatus(`Status Check Failed: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                updateStatus(`Status Check Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testPlatform(platform) {
+            showLoading(`Testing ${platform} scraping...`);
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/scraper-test/test-scrape`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        platform: platform,
+                        keywords: ['test', 'popular'],
+                        maxResults: 3
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayProducts(data.products, platform);
+                    updateStatus(`${platform} test completed: ${data.count} products found`, 'success');
+                } else {
+                    updateResults(`<div class="error">${platform} test failed: ${data.error}</div>`);
+                    updateStatus(`${platform} test failed: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                updateResults(`<div class="error">${platform} test error: ${error.message}</div>`);
+                updateStatus(`${platform} test error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCustom() {
+            const platform = document.getElementById('platform').value;
+            const keywords = document.getElementById('keywords').value.split(',').map(k => k.trim()).filter(k => k);
+            const maxResults = parseInt(document.getElementById('maxResults').value) || 5;
+            
+            showLoading(`Testing ${platform} with custom keywords: ${keywords.join(', ')}`);
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/scraper-test/test-scrape`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        platform: platform,
+                        keywords: keywords,
+                        maxResults: maxResults
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayProducts(data.products, platform);
+                    updateStatus(`Custom ${platform} test completed: ${data.count} products found`, 'success');
+                } else {
+                    updateResults(`<div class="error">Custom ${platform} test failed: ${data.error}</div>`);
+                    updateStatus(`Custom ${platform} test failed: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                updateResults(`<div class="error">Custom ${platform} test error: ${error.message}</div>`);
+                updateStatus(`Custom ${platform} test error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAllPlatforms() {
+            showLoading('Testing all platforms...');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/scraper-test/test-all-platforms`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    let html = '<h3>All Platforms Test Results:</h3>';
+                    for (const [platform, result] of Object.entries(data.results)) {
+                        if (result.success) {
+                            html += `<div class="success">${platform}: ${result.count} products found</div>`;
+                            if (result.products && result.products.length > 0) {
+                                html += '<div style="margin-left: 20px;">';
+                                result.products.forEach(product => {
+                                    html += `<div class="product-card">
+                                        <img src="${product.imageUrl}" class="product-image" onerror="this.src='/logos/default-product.png'">
+                                        <div class="product-info">
+                                            <h4>${product.title}</h4>
+                                            <p>Price: ${product.price.toLocaleString()}원</p>
+                                            <p>Platform: ${product.platform}</p>
+                                        </div>
+                                    </div>`;
+                                });
+                                html += '</div>';
+                            }
+                        } else {
+                            html += `<div class="error">${platform}: ${result.error}</div>`;
+                        }
+                    }
+                    updateResults(html);
+                    updateStatus('All platforms test completed', 'success');
+                } else {
+                    updateResults(`<div class="error">All platforms test failed: ${data.error}</div>`);
+                    updateStatus(`All platforms test failed: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                updateResults(`<div class="error">All platforms test error: ${error.message}</div>`);
+                updateStatus(`All platforms test error: ${error.message}`, 'error');
+            }
+        }
+
+        function displayProducts(products, platform) {
+            if (!products || products.length === 0) {
+                updateResults(`<div class="info">No products found for ${platform}</div>`);
+                return;
+            }
+
+            let html = `<h3>${platform} Products (${products.length} found):</h3>`;
+            products.forEach(product => {
+                html += `<div class="product-card">
+                    <img src="${product.imageUrl}" class="product-image" onerror="this.src='/logos/default-product.png'">
+                    <div class="product-info">
+                        <h4>${product.title}</h4>
+                        <p><strong>Price:</strong> ${product.price.toLocaleString()}원</p>
+                        <p><strong>Platform:</strong> ${product.platform}</p>
+                        <p><strong>Category:</strong> ${product.category || 'N/A'}</p>
+                        <p><strong>Sales Count:</strong> ${product.salesCount || 0}</p>
+                        <p><strong>Rating:</strong> ${product.rating || 'N/A'}</p>
+                        <p><strong>URL:</strong> <a href="${product.url}" target="_blank">View Product</a></p>
+                    </div>
+                </div>`;
+            });
+            updateResults(html);
+        }
+
+        // Initialize
+        window.onload = function() {
+            updateStatus('Ready to test scraper API', 'info');
+        };
+    </script>
+</body>
+</html>
