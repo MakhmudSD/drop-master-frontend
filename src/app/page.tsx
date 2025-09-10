@@ -7,7 +7,7 @@ import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import Features from '@/components/Features';
 import Footer from '@/components/Footer';
-import { productsApi } from '@/services/api';
+import { productsApi } from '@/lib/api';
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -29,28 +29,9 @@ export default function Home() {
   const fetchPopularProducts = async (platform: string) => {
     setProductsLoading(true);
     try {
-      const response = await productsApi.getPopularProducts(platform, 20);
-      if (response?.data?.success) {
-        const products = response.data?.data?.products || [];
-        // Transform Apify data to match our interface
-        const transformedProducts = products.map((product: any, index: number) => ({
-          id: product.id || product._id || `product-${index}`,
-          name: product.title || product.name || '상품명 없음',
-          title: product.title || product.name || '상품명 없음',
-          price: product.price || product.salePrice || product.priceKRW || 0,
-          imageUrl: product.imageUrl || product.image || product.imageUrls?.[0] || '/logos/default-product.png',
-          salesCount: product.salesCount || product.reviewCount || Math.floor(Math.random() * 1000),
-          growthRate: product.growthRate || Math.floor(Math.random() * 30),
-          estimatedMargin: product.estimatedMargin || product.marginRate || Math.floor(Math.random() * 50)
-        }));
-        setPopularProducts(transformedProducts);
-      } else {
-        throw new Error('API response was not successful');
-      }
-    } catch (error) {
-      console.error('Failed to fetch popular products:', error);
-      // Set fallback products for demo when API fails
-      setPopularProducts([
+      // For now, use mock data since the backend endpoint requires authentication
+      // TODO: Fix backend authentication for public endpoints
+      const mockProducts = [
         {
           id: '1',
           name: 'AirPods Pro 2nd Gen',
@@ -80,6 +61,43 @@ export default function Home() {
           salesCount: 420,
           growthRate: 9.1,
           estimatedMargin: 32.1
+        },
+        {
+          id: '4',
+          name: 'Wireless Charger Stand',
+          title: '무선 충전 스탠드',
+          price: 15900,
+          imageUrl: '/logos/coupang.png',
+          salesCount: 680,
+          growthRate: 12.5,
+          estimatedMargin: 28.7
+        },
+        {
+          id: '5',
+          name: 'Bluetooth Speaker',
+          title: '블루투스 스피커',
+          price: 45000,
+          imageUrl: '/logos/naver.png',
+          salesCount: 320,
+          growthRate: 8.3,
+          estimatedMargin: 35.2
+        }
+      ];
+      
+      setPopularProducts(mockProducts);
+    } catch (error) {
+      console.error('Failed to fetch popular products:', error);
+      // Set fallback products for demo when API fails
+      setPopularProducts([
+        {
+          id: 'fallback-1',
+          name: 'Sample Product 1',
+          title: '샘플 상품 1',
+          price: 10000,
+          imageUrl: '/logos/default-product.png',
+          salesCount: 100,
+          growthRate: 5.0,
+          estimatedMargin: 20.0
         }
       ]);
     } finally {

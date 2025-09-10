@@ -26,9 +26,16 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401 && typeof window !== 'undefined') {
-      // Token expired or invalid
-      localStorage.removeItem('accessToken');
-      window.location.href = '/login';
+      // Only redirect to login if this was an authenticated request
+      // Check if the request had an Authorization header
+      const hasAuthHeader = error.config?.headers?.Authorization;
+      
+      if (hasAuthHeader) {
+        // Token expired or invalid for authenticated request
+        localStorage.removeItem('accessToken');
+        window.location.href = '/login';
+      }
+      // For public endpoints (no auth header), just let the error pass through
     }
     return Promise.reject(error);
   }
@@ -37,22 +44,22 @@ api.interceptors.response.use(
 // Auth API
 export const authApi = {
   login: (email: string, password: string) =>
-    api.post<ApiResponse<{ user: User; accessToken: string }>>('/auth/login', { email, password }),
+    api.post<ApiResponse<{ user: User; accessToken: string }>>('/api/auth/login', { email, password }),
   
   register: (userData: Partial<User>) =>
-    api.post<ApiResponse<{ user: User; accessToken: string }>>('/auth/register', userData),
+    api.post<ApiResponse<{ user: User; accessToken: string }>>('/api/auth/register', userData),
   
   me: () =>
-    api.get<ApiResponse<User>>('/auth/profile'),
+    api.get<ApiResponse<User>>('/api/auth/profile'),
   
   googleLogin: () =>
-    api.get<ApiResponse<{ user: User; accessToken: string }>>('/auth/google'),
+    api.get<ApiResponse<{ user: User; accessToken: string }>>('/api/auth/google'),
   
   kakaoLogin: () =>
-    api.get<ApiResponse<{ user: User; accessToken: string }>>('/auth/kakao'),
+    api.get<ApiResponse<{ user: User; accessToken: string }>>('/api/auth/kakao'),
   
   naverLogin: () =>
-    api.get<ApiResponse<{ user: User; accessToken: string }>>('/auth/naver'),
+    api.get<ApiResponse<{ user: User; accessToken: string }>>('/api/auth/naver'),
 };
 
 // Products API
@@ -65,25 +72,30 @@ export const productsApi = {
     category?: string;
     search?: string;
   }) =>
-    api.get<ApiResponse<{ products: Product[]; pagination: PaginationInfo }>>('/products', { params }),
+    api.get<ApiResponse<{ products: Product[]; pagination: PaginationInfo }>>('/api/products', { params }),
   
   getProduct: (id: string) =>
-    api.get<ApiResponse<Product>>(`/products/${id}`),
+    api.get<ApiResponse<Product>>(`/api/products/${id}`),
+  
+  getPopularProducts: (platform?: string, limit?: number) =>
+    api.get<ApiResponse<{ products: Product[] }>>('/api/products/popular', { 
+      params: { platform, limit } 
+    }),
   
   createProduct: (productData: Partial<Product>) =>
-    api.post<ApiResponse<Product>>('/products', productData),
+    api.post<ApiResponse<Product>>('/api/products', productData),
   
   updateProduct: (id: string, productData: Partial<Product>) =>
-    api.put<ApiResponse<Product>>(`/products/${id}`, productData),
+    api.put<ApiResponse<Product>>(`/api/products/${id}`, productData),
   
   deleteProduct: (id: string) =>
-    api.delete<ApiResponse<void>>(`/products/${id}`),
+    api.delete<ApiResponse<void>>(`/api/products/${id}`),
   
   bulkDelete: (ids: string[]) =>
-    api.request({ method: 'DELETE', url: '/products/bulk', data: { ids } }),
+    api.request({ method: 'DELETE', url: '/api/products/bulk', data: { ids } }),
   
   bulkUpdate: (ids: string[], updates: Partial<Product>) =>
-    api.put<ApiResponse<void>>('/products/bulk', { data: { ids, updates } }),
+    api.put<ApiResponse<void>>('/api/products/bulk', { data: { ids, updates } }),
 };
 
 // Orders API
@@ -93,34 +105,34 @@ export const ordersApi = {
     limit?: number;
     status?: string;
   }) =>
-    api.get<ApiResponse<{ orders: Order[]; pagination: PaginationInfo }>>('/orders', { params }),
+    api.get<ApiResponse<{ orders: Order[]; pagination: PaginationInfo }>>('/api/orders', { params }),
   
   getOrder: (id: string) =>
-    api.get<ApiResponse<Order>>(`/orders/${id}`),
+    api.get<ApiResponse<Order>>(`/api/orders/${id}`),
   
   createOrder: (orderData: Partial<Order>) =>
-    api.post<ApiResponse<Order>>('/orders', orderData),
+    api.post<ApiResponse<Order>>('/api/orders', orderData),
   
   updateOrder: (id: string, orderData: Partial<Order>) =>
-    api.put<ApiResponse<Order>>(`/orders/${id}`, orderData),
+    api.put<ApiResponse<Order>>(`/api/orders/${id}`, orderData),
   
   deleteOrder: (id: string) =>
-    api.delete<ApiResponse<void>>(`/orders/${id}`),
+    api.delete<ApiResponse<void>>(`/api/orders/${id}`),
 };
 
 // Automation API
 export const automationApi = {
   getAutomation: () =>
-    api.get<ApiResponse<Automation>>('/automation'),
+    api.get<ApiResponse<Automation>>('/api/automation'),
   
   updateAutomation: (automationData: Partial<Automation>) =>
-    api.put<ApiResponse<Automation>>('/automation', automationData),
+    api.put<ApiResponse<Automation>>('/api/automation', automationData),
   
   startAutomation: () =>
-    api.post<ApiResponse<void>>('/automation/start'),
+    api.post<ApiResponse<void>>('/api/automation/start'),
   
   stopAutomation: () =>
-    api.post<ApiResponse<void>>('/automation/stop'),
+    api.post<ApiResponse<void>>('/api/automation/stop'),
 };
 
 // Scraping API
@@ -130,7 +142,7 @@ export const scrapingApi = {
     limit?: number;
     platform?: string;
   }) =>
-    api.get<ApiResponse<{ runs: ScrapingRun[]; pagination: PaginationInfo }>>('/scraping/runs', { params }),
+    api.get<ApiResponse<{ runs: ScrapingRun[]; pagination: PaginationInfo }>>('/api/scraping/runs', { params }),
   
   startScraping: (data: {
     platform: string;
@@ -138,46 +150,46 @@ export const scrapingApi = {
     categories?: string[];
     maxResults?: number;
   }) =>
-    api.post<ApiResponse<ScrapingRun>>('/scraping/start', data),
+    api.post<ApiResponse<ScrapingRun>>('/api/scraping/start', data),
   
   getScrapingRun: (id: string) =>
-    api.get<ApiResponse<ScrapingRun>>(`/scraping/runs/${id}`),
+    api.get<ApiResponse<ScrapingRun>>(`/api/scraping/runs/${id}`),
   
   stopScraping: (id: string) =>
-    api.post<ApiResponse<void>>(`/scraping/runs/${id}/stop`),
+    api.post<ApiResponse<void>>(`/api/scraping/runs/${id}/stop`),
 };
 
 // User API
 export const userApi = {
   getProfile: () =>
-    api.get<ApiResponse<User>>('/user/profile'),
+    api.get<ApiResponse<User>>('/api/user/profile'),
   
   updateProfile: (userData: Partial<User>) =>
-    api.put<ApiResponse<User>>('/user/profile', userData),
+    api.put<ApiResponse<User>>('/api/user/profile', userData),
   
   changePassword: (currentPassword: string, newPassword: string) =>
-    api.put<ApiResponse<void>>('/user/change-password', { currentPassword, newPassword }),
+    api.put<ApiResponse<void>>('/api/user/change-password', { currentPassword, newPassword }),
 };
 
 // Cart API
 export const cartApi = {
   getCart: () =>
-    api.get<ApiResponse<{ items: any[]; total: number }>>('/cart'),
+    api.get<ApiResponse<{ items: any[]; total: number }>>('/api/cart'),
   
   addToCart: (productId: string, quantity: number = 1) =>
-    api.post<ApiResponse<void>>('/cart/add', { productId, quantity }),
+    api.post<ApiResponse<void>>('/api/cart/add', { productId, quantity }),
   
   updateCartItem: (itemId: string, quantity: number) =>
-    api.put<ApiResponse<void>>(`/cart/items/${itemId}`, { quantity }),
+    api.put<ApiResponse<void>>(`/api/cart/items/${itemId}`, { quantity }),
   
   removeFromCart: (itemId: string) =>
-    api.delete<ApiResponse<void>>(`/cart/items/${itemId}`),
+    api.delete<ApiResponse<void>>(`/api/cart/items/${itemId}`),
   
   clearCart: () =>
-    api.delete<ApiResponse<void>>('/cart/clear'),
+    api.delete<ApiResponse<void>>('/api/cart/clear'),
   
   checkout: (checkoutData: any) =>
-    api.post<ApiResponse<{ orderId: string }>>('/cart/checkout', checkoutData),
+    api.post<ApiResponse<{ orderId: string }>>('/api/cart/checkout', checkoutData),
 };
 
 export default api;
