@@ -47,13 +47,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           
           if (response.ok) {
             const userData = await response.json();
-            if (userData.success && userData.data) {
-              setUser(userData.data.user);
-            } else {
-              localStorage.removeItem('accessToken');
-            }
-          } else {
-            localStorage.removeItem('accessToken');
+            setUser(userData); // <-- directly set user
           }
         }
       } catch (error) {

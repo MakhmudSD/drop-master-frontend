@@ -9,33 +9,36 @@ export default function AuthCallback() {
 
   useEffect(() => {
     const handleCallback = async () => {
-      if (typeof window === 'undefined') return;
-
       const urlParams = new URLSearchParams(window.location.search);
-      const provider = urlParams.get('provider') as 'google' | 'kakao' | 'naver';
-      const userParam = urlParams.get('user');
-      const tokenParam = urlParams.get('token');
+      const token = urlParams.get('token');
 
-      if (!provider) {
-        router.replace('/login?error=missing_provider');
+      if (!token) {
+        router.replace('/login?error=missing_token');
         return;
       }
 
       try {
-        if (tokenParam) {
-          // Store the token and redirect to home
-          localStorage.setItem('accessToken', tokenParam);
-          router.replace('/');
-        } else if (userParam) {
-          // Handle new format with user data
-          const userData = JSON.parse(decodeURIComponent(userParam));
-          localStorage.setItem('accessToken', userData.accessToken || tokenParam);
-          router.replace('/');
+        // Save JWT to localStorage
+        localStorage.setItem('accessToken', token);
+
+        // Fetch user profile from backend
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/auth/profile`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          localStorage.setItem('user', JSON.stringify(data));
         } else {
-          router.replace('/login?error=missing_data');
+          console.error('Failed to fetch profile', await response.text());
         }
+
+        router.replace('/'); // Redirect to home/dashboard
       } catch (error) {
-        console.error('Error handling OAuth callback:', error);
+        console.error('OAuth callback error:', error);
         router.replace('/login?error=callback_error');
       } finally {
         setLoading(false);
@@ -46,14 +49,7 @@ export default function AuthCallback() {
   }, [router]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">로그인 처리 중...</p>
-        </div>
-      </div>
-    );
+    return <div>Logging in...</div>;
   }
 
   return null;
