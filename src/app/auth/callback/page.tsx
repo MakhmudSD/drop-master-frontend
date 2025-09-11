@@ -31,9 +31,18 @@ export default function AuthCallback() {
 
         if (response.ok) {
           const data = await response.json();
-          localStorage.setItem('user', JSON.stringify(data));
+          if (data.success && data.data) {
+            // Store user data in localStorage for the auth context
+            localStorage.setItem('user', JSON.stringify(data.data.user));
+          } else {
+            console.error('Failed to get user data:', data.message);
+            router.replace('/login?error=profile_error');
+            return;
+          }
         } else {
           console.error('Failed to fetch profile', await response.text());
+          router.replace('/login?error=profile_fetch_error');
+          return;
         }
 
         router.replace('/'); // Redirect to home/dashboard

@@ -36,9 +36,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check for existing session on mount
     const checkAuth = async () => {
       try {
+        // First check if we have user data in localStorage (from OAuth callback)
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          try {
+            const userData = JSON.parse(storedUser);
+            setUser(userData);
+            setLoading(false);
+            return;
+          } catch (e) {
+            localStorage.removeItem('user');
+          }
+        }
+
+        // If no stored user, check token with backend
         const token = localStorage.getItem('accessToken');
         if (token) {
-          // Verify token with backend
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/auth/profile`, {
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -47,12 +60,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           
           if (response.ok) {
             const userData = await response.json();
-            setUser(userData); // <-- directly set user
+            if (userData.success && userData.data) {
+              setUser(userData.data.user);
+              // Store user data for future use
+              localStorage.setItem('user', JSON.stringify(userData.data.user));
+            } else {
+              localStorage.removeItem('accessToken');
+              localStorage.removeItem('user');
+            }
+          } else {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('user');
           }
         }
       } catch (error) {
         console.error('Auth check failed:', error);
         localStorage.removeItem('accessToken');
+        localStorage.removeItem('user');
       } finally {
         setLoading(false);
       }
@@ -119,6 +143,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
     setUser(null);
   };
 
