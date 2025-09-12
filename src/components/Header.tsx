@@ -59,10 +59,12 @@ export default function Header({ user }: HeaderProps) {
             {user ? (
               <div className="flex items-center space-x-4">
                 <div className="hidden md:flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-gray-600" />
-                  </div>
-                  <span className="text-sm font-medium text-gray-700">{user.name}</span>
+                  <Link href="/profile" className="flex items-center space-x-2 hover:text-blue-600">
+                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-gray-600" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">{user.name}</span>
+                  </Link>
                 </div>
                 <div className="relative">
                   <button
@@ -149,6 +151,14 @@ export default function Header({ user }: HeaderProps) {
                   >
                     <ShoppingCart className="w-4 h-4 mr-2" />
                     장바구니
+                  </Link>
+                  <Link
+                    href="/profile"
+                    className="block px-3 py-2 text-gray-700 hover:text-blue-600 font-medium flex items-center"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    프로필
                   </Link>
                 </>
               )}

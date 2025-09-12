@@ -52,8 +52,13 @@ export default function RegisterPage() {
         password: formData.password,
       });
       router.push('/');
-    } catch (err) {
-      setError('회원가입 중 오류가 발생했습니다. 이메일이 이미 사용 중일 수 있습니다.');
+    } catch (err: any) {
+      // Check if it's a duplicate email error
+      if (err.message && err.message.includes('already exists')) {
+        setError('이 이메일로 이미 가입된 계정이 있습니다. 로그인을 시도해보세요.');
+      } else {
+        setError(err.message || '회원가입 중 오류가 발생했습니다.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -102,6 +107,13 @@ export default function RegisterPage() {
             {error && (
               <div className={styles.errorMessage}>
                 {error}
+                {error.includes('이미 가입된 계정이 있습니다') && (
+                  <div className="mt-2">
+                    <Link href="/login" className="text-blue-600 hover:text-blue-800 underline">
+                      로그인 페이지로 이동
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
 
