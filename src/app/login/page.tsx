@@ -54,15 +54,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div className={styles.loginContainer}>
-      <div className={styles.loginCard}>
-        <div className={styles.loginHeader}>
-          <div className={styles.logoContainer}>
-            <div className={styles.logoIcon}><User /></div>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div className="text-center">
+          <div className="mx-auto h-16 w-16 bg-purple-600 rounded-xl flex items-center justify-center">
+            <User className="h-8 w-8 text-white" />
           </div>
-          <h2 className={styles.title}>로그인</h2>
-          <p className={styles.subtitle}>
-            또는 <Link href="/register" className={styles.subtitleLink}>새 계정 만들기</Link>
+          <h2 className="mt-6 text-3xl font-bold text-gray-900">드랍쉬핑 마스터</h2>
+          <p className="mt-2 text-sm text-gray-600">
+            또는 <Link href="/register" className="font-medium text-purple-600 hover:text-purple-500">새 계정 만들기</Link>
           </p>
         </div>
 

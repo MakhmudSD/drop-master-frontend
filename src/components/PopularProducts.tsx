@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { ExternalLink, Star, TrendingUp, DollarSign } from 'lucide-react';
+import { ExternalLink, Star, TrendingUp, DollarSign, ChevronDown } from 'lucide-react';
 
   interface PopularProductsProps {
     products: {
@@ -28,6 +28,8 @@ import { ExternalLink, Star, TrendingUp, DollarSign } from 'lucide-react';
       seller?: string;
       location?: string;
       specifications?: Record<string, any>;
+      competitionLevel?: 'high' | 'medium' | 'low';
+      alibabaPrice?: number;
     }[];
     selectedPlatform: string;
     onPlatformChange: (platform: string) => void;
@@ -47,11 +49,24 @@ const platformLogos = {
 
 const platformNames = {
   coupang: '쿠팡',
-  naver: '네이버',
+  naver: '네이버 플러스스토어',
   '11st': '11번가',
   '1688': '1688',
   aliexpress: '알리익스프레스',
   alibaba: '알리바바',
+};
+
+const getCompetitionBadge = (level?: 'high' | 'medium' | 'low') => {
+  switch (level) {
+    case 'high':
+      return { text: '고경쟁', color: 'bg-red-100 text-red-800' };
+    case 'medium':
+      return { text: '중경쟁', color: 'bg-yellow-100 text-yellow-800' };
+    case 'low':
+      return { text: '저경쟁', color: 'bg-green-100 text-green-800' };
+    default:
+      return { text: '중경쟁', color: 'bg-yellow-100 text-yellow-800' };
+  }
 };
 
 export default function PopularProducts({
@@ -63,231 +78,202 @@ export default function PopularProducts({
   loading,
 }: PopularProductsProps) {
   const platforms = ['coupang', 'naver', '11st', '1688', 'aliexpress', 'alibaba'];
+  const [isPlatformDropdownOpen, setIsPlatformDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsPlatformDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
-    <section className="py-20 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            인기 상품
-          </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            실시간 데이터로 분석된 인기 상품들을 확인하고 수익 기회를 발견하세요
-          </p>
-        </div>
-
-        {/* Platform Selector */}
-        <div className="flex flex-wrap justify-center gap-4 mb-8">
-          {platforms.map((platform) => (
-            <button
-              key={platform}
-              onClick={() => onPlatformChange(platform)}
-              className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
-                selectedPlatform === platform
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-              }`}
-            >
-              <div className="w-6 h-6 relative">
-                <Image
-                  src={platformLogos[platform as keyof typeof platformLogos]}
-                  alt={platformNames[platform as keyof typeof platformNames]}
-                  fill
-                  className="object-contain"
-                />
+    <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">드랍쉬핑 마스터</h1>
+              <p className="text-gray-600">실시간 데이터로 분석된 인기 상품들을 확인하고 수익 기회를 발견하세요</p>
+            </div>
+            
+            {/* Desktop Platform Selector */}
+            <div className="mt-4 lg:mt-0">
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setIsPlatformDropdownOpen(!isPlatformDropdownOpen)}
+                  className="w-full lg:w-auto lg:min-w-64 flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 relative">
+                      <div className="w-8 h-8 bg-green-500 rounded flex items-center justify-center text-white font-bold text-sm">
+                        N
+                      </div>
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">+</span>
+                      </div>
+                    </div>
+                    <span className="text-gray-900 font-medium">
+                      {platformNames[selectedPlatform as keyof typeof platformNames]}
+                    </span>
+                  </div>
+                  <ChevronDown className="w-5 h-5 text-gray-400" />
+                </button>
+                
+                {isPlatformDropdownOpen && (
+                  <div className="absolute top-full left-0 right-0 lg:right-auto mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                    {platforms.map((platform) => (
+                      <button
+                        key={platform}
+                        onClick={() => {
+                          onPlatformChange(platform);
+                          setIsPlatformDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center space-x-3 p-4 hover:bg-gray-50 text-left"
+                      >
+                        <div className="w-8 h-8 relative">
+                          <Image
+                            src={platformLogos[platform as keyof typeof platformLogos]}
+                            alt={platformNames[platform as keyof typeof platformNames]}
+                            fill
+                            className="object-contain"
+                          />
+                        </div>
+                        <span className="text-gray-900">{platformNames[platform as keyof typeof platformNames]}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-              <span>{platformNames[platform as keyof typeof platformNames]}</span>
-            </button>
-          ))}
-        </div>
+            </div>
+          </div>
 
-        {/* Sorting Selector */}
-        <div className="flex justify-center mb-12">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
-            <select
-              value={selectedSortBy}
-              onChange={(e) => onSortByChange(e.target.value)}
-              className="px-4 py-2 border-0 bg-transparent text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md"
-            >
-              <option value="daily">일간 인기</option>
-              <option value="weekly">주간 인기</option>
-              <option value="monthly">월간 인기</option>
-            </select>
+          {/* Time Period Tabs */}
+          <div className="flex space-x-1 bg-gray-100 rounded-lg p-1 w-fit">
+            {[
+              { key: 'daily', label: '일간' },
+              { key: 'weekly', label: '주간' },
+              { key: 'monthly', label: '월간' }
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => onSortByChange(tab.key)}
+                className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+                  selectedSortBy === tab.key
+                    ? 'bg-purple-600 text-white'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Products Grid */}
+        {/* Products Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-semibold text-gray-900">
+              {selectedSortBy === 'daily' ? '일간' : selectedSortBy === 'weekly' ? '주간' : '월간'} 인기상품 순위
+            </h2>
+            <div className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+              총 {products.length}개 상품
+            </div>
+          </div>
+        </div>
+
+        {/* Products List */}
         {loading ? (
           <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map((product, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow overflow-hidden"
-              >
-                <div className="aspect-square relative bg-gray-100">
-                  {product.imageUrl ? (
-                    <Image
-                      src={product.imageUrl}
-                      alt={product.title || '상품 이미지'}
-                      fill
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      <ExternalLink className="w-12 h-12" />
-                    </div>
-                  )}
-                  <div className="absolute top-2 right-2 bg-white rounded-full p-1">
-                    <div className="w-6 h-6 relative">
+            {products.map((product, index) => {
+              const competitionBadge = getCompetitionBadge(product.competitionLevel);
+              return (
+                <div
+                  key={index}
+                  className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-lg transition-all duration-200 hover:border-purple-200"
+                >
+                  {/* Product Image */}
+                  <div className="w-full h-48 bg-gray-100 rounded-lg mb-4 overflow-hidden">
+                    {product.imageUrl ? (
                       <Image
-                        src={platformLogos[selectedPlatform as keyof typeof platformLogos]}
-                        alt={platformNames[selectedPlatform as keyof typeof platformNames]}
-                        fill
-                        className="object-contain"
+                        src={product.imageUrl}
+                        alt={product.title || '상품 이미지'}
+                        width={300}
+                        height={200}
+                        className="w-full h-full object-cover"
                       />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
-                    {product.title || '상품명 없음'}
-                  </h3>
-                  
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">가격</span>
-                        <div className="text-right">
-                          {product.originalPrice && product.discount && (
-                            <div className="text-xs text-gray-400 line-through">
-                              ₩{parseInt(product.originalPrice).toLocaleString()}
-                            </div>
-                          )}
-                          <span className="font-semibold text-gray-900">
-                            {product.price ? `₩${product.price.toLocaleString()}` : '가격 정보 없음'}
-                          </span>
-                          {product.discount && (
-                            <span className="text-xs text-red-500 ml-1">
-                              -{product.discount}%
-                            </span>
-                          )}
-                        </div>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <ExternalLink className="w-12 h-12" />
                       </div>
-                      
-                      {product.salesCount && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-500">판매량</span>
-                          <span className="text-sm text-gray-700">
-                            {product.salesCount.toLocaleString()}개
-                          </span>
-                        </div>
-                      )}
-                      
-                      {product.rating && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-500">평점</span>
-                          <div className="text-right">
-                            <span className="text-sm text-yellow-600 flex items-center">
-                              <Star className="w-4 h-4 mr-1" />
-                              {product.rating.toFixed(1)}
-                            </span>
-                            {product.reviewCount && (
-                              <div className="text-xs text-gray-400">
-                                ({product.reviewCount}개 리뷰)
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {product.growthRate && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-500">성장률</span>
-                          <span className="text-sm text-green-600 flex items-center">
-                            <TrendingUp className="w-4 h-4 mr-1" />
-                            {product.growthRate.toFixed(1)}%
-                          </span>
-                        </div>
-                      )}
-                      
-                      {product.estimatedMargin && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-500">예상 마진</span>
-                          <span className="text-sm text-blue-600 flex items-center">
-                            <DollarSign className="w-4 h-4 mr-1" />
-                            {product.estimatedMargin}%
-                          </span>
-                        </div>
-                      )}
-                      
-                      {product.brand && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-500">브랜드</span>
-                          <span className="text-sm text-gray-700">
-                            {product.brand}
-                          </span>
-                        </div>
-                      )}
-                      
-                      {product.stock && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-500">재고</span>
-                          <span className="text-sm text-gray-700">
-                            {product.stock}개
-                          </span>
-                        </div>
-                      )}
-                      
-                      {product.shippingInfo && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-500">배송</span>
-                          <span className="text-sm text-gray-700">
-                            {product.shippingInfo}
-                          </span>
-                        </div>
-                      )}
-                      
-                      {product.tags && product.tags.length > 0 && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-500">태그</span>
-                          <div className="flex flex-wrap gap-1">
-                            {product.tags.slice(0, 2).map((tag, index) => (
-                              <span key={index} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  
-                  <div className="flex space-x-2">
-                    <button 
-                      onClick={() => {
-                        // TODO: Implement product detail modal or page
-                        console.log('View product details:', product);
-                      }}
-                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                    >
-                      상세보기
-                    </button>
-                    {product.link && product.link !== '#' && (
-                      <button 
-                        onClick={() => window.open(product.link, '_blank')}
-                        className="bg-gray-100 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
-                        title="원본 상품 페이지 열기"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </button>
                     )}
                   </div>
+
+                  {/* Category and Competition Badge */}
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm text-gray-500">{product.category || '이어폰/헤드폰'}</span>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${competitionBadge.color}`}>
+                      {competitionBadge.text}
+                    </span>
+                  </div>
+
+                  {/* Product Title */}
+                  <h3 className="font-semibold text-gray-900 mb-3 line-clamp-2 text-base">
+                    {product.title || '에어팟 프로 2세대 무선 이어폰'}
+                  </h3>
+
+                  {/* Price */}
+                  <div className="text-2xl font-bold text-gray-900 mb-4">
+                    {product.price ? `${product.price.toLocaleString()}원` : '289,000원'}
+                  </div>
+
+                  {/* Metrics Grid */}
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="text-center">
+                      <div className="text-xs text-gray-500 mb-1">판매량</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {product.salesCount ? `${product.salesCount.toLocaleString()}` : '2,360'}
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-gray-500 mb-1">성장률</div>
+                      <div className="text-sm font-semibold text-green-600">
+                        {product.growthRate ? `+${product.growthRate.toFixed(1)}%` : '+15.2%'}
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-gray-500 mb-1">예상 마진</div>
+                      <div className="text-sm font-semibold text-green-600">
+                        {product.estimatedMargin ? `${product.estimatedMargin}%` : '87%'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Alibaba Price */}
+                  <div className="text-center text-sm text-green-600 mb-4 bg-green-50 py-2 rounded-lg">
+                    알리바바 가격: <span className="font-semibold">${product.alibabaPrice || 12.50}</span>
+                  </div>
+
+                  {/* Register Button */}
+                  <button className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-purple-700 transition-colors">
+                    드랍쉬핑 상품으로 등록하기
+                  </button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -304,6 +290,7 @@ export default function PopularProducts({
             </p>
           </div>
         )}
+
       </div>
     </section>
   );

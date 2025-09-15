@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { useI18n } from '@/hooks/useI18n';
 import { User, Menu, X, ShoppingCart, LogOut } from 'lucide-react';
+import LanguageSwitcher from './LanguageSwitcher';
 
 interface HeaderProps {
   user: { name: string } | null;
@@ -11,6 +13,7 @@ interface HeaderProps {
 
 export default function Header({ user }: HeaderProps) {
   const { logout } = useAuth();
+  const { getText } = useI18n();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -20,35 +23,32 @@ export default function Header({ user }: HeaderProps) {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
                 <ShoppingCart className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900">Drop Master</span>
+              <span className="text-xl font-bold text-gray-900">{getText('app.title', '드랍쉬핑 마스터')}</span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link href="/" className="text-gray-700 hover:text-blue-600 font-medium">
-              홈
+              {getText('nav.home', '홈')}
             </Link>
             {user && (
               <>
                 <Link href="/dashboard" className="text-gray-700 hover:text-blue-600 font-medium">
-                  대시보드
-                </Link>
-                <Link href="/products" className="text-gray-700 hover:text-blue-600 font-medium">
-                  상품 관리
-                </Link>
-                <Link href="/scraping" className="text-gray-700 hover:text-blue-600 font-medium">
-                  스크래핑
-                </Link>
-                <Link href="/automation" className="text-gray-700 hover:text-blue-600 font-medium">
-                  자동화
+                  {getText('nav.dashboard', '대시보드')}
                 </Link>
                 <Link href="/cart" className="text-gray-700 hover:text-blue-600 font-medium flex items-center">
                   <ShoppingCart className="w-4 h-4 mr-1" />
-                  장바구니
+                  {getText('nav.cart', '장바구니')}
+                </Link>
+                <Link href="/settings" className="text-gray-700 hover:text-blue-600 font-medium">
+                  {getText('nav.settings', '설정')}
+                </Link>
+                <Link href="/automation" className="text-gray-700 hover:text-blue-600 font-medium">
+                  {getText('nav.automation', '자동화')}
                 </Link>
               </>
             )}
@@ -56,25 +56,17 @@ export default function Header({ user }: HeaderProps) {
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
+            <LanguageSwitcher />
             {user ? (
               <div className="flex items-center space-x-4">
-                <div className="hidden md:flex items-center space-x-2">
-                  <Link href="/profile" className="flex items-center space-x-2 hover:text-blue-600">
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                      <User className="w-5 h-5 text-gray-600" />
-                    </div>
-                    <span className="text-sm font-medium text-gray-700">{user.name}</span>
-                  </Link>
-                </div>
-                <div className="relative">
-                  <button
-                    onClick={logout}
-                    className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 font-medium"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span className="hidden md:inline">로그아웃</span>
-                  </button>
-                </div>
+                <Link href="/profile" className="flex items-center space-x-2 hover:text-blue-600">
+                  <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 text-gray-600" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-700 hidden md:inline">
+                    {getText('nav.myPage', '마이페이지')}
+                  </span>
+                </Link>
               </div>
             ) : (
               <div className="flex items-center space-x-4">
@@ -82,13 +74,13 @@ export default function Header({ user }: HeaderProps) {
                   href="/login"
                   className="text-gray-700 hover:text-blue-600 font-medium"
                 >
-                  로그인
+                  {getText('nav.login', '로그인')}
                 </Link>
                 <Link
                   href="/register"
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
                 >
-                  회원가입
+                  {getText('nav.register', '회원가입')}
                 </Link>
               </div>
             )}
@@ -112,7 +104,7 @@ export default function Header({ user }: HeaderProps) {
                 className="block px-3 py-2 text-gray-700 hover:text-blue-600 font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
-                홈
+                {getText('nav.home', '홈')}
               </Link>
               {user && (
                 <>
@@ -121,28 +113,7 @@ export default function Header({ user }: HeaderProps) {
                     className="block px-3 py-2 text-gray-700 hover:text-blue-600 font-medium"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    대시보드
-                  </Link>
-                  <Link
-                    href="/products"
-                    className="block px-3 py-2 text-gray-700 hover:text-blue-600 font-medium"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    상품 관리
-                  </Link>
-                  <Link
-                    href="/scraping"
-                    className="block px-3 py-2 text-gray-700 hover:text-blue-600 font-medium"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    스크래핑
-                  </Link>
-                  <Link
-                    href="/automation"
-                    className="block px-3 py-2 text-gray-700 hover:text-blue-600 font-medium"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    자동화
+                    {getText('nav.dashboard', '대시보드')}
                   </Link>
                   <Link
                     href="/cart"
@@ -150,7 +121,21 @@ export default function Header({ user }: HeaderProps) {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    장바구니
+                    {getText('nav.cart', '장바구니')}
+                  </Link>
+                  <Link
+                    href="/settings"
+                    className="block px-3 py-2 text-gray-700 hover:text-blue-600 font-medium"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {getText('nav.settings', '설정')}
+                  </Link>
+                  <Link
+                    href="/automation"
+                    className="block px-3 py-2 text-gray-700 hover:text-blue-600 font-medium"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {getText('nav.automation', '자동화')}
                   </Link>
                   <Link
                     href="/profile"
@@ -158,8 +143,18 @@ export default function Header({ user }: HeaderProps) {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <User className="w-4 h-4 mr-2" />
-                    프로필
+                    {getText('nav.myPage', '마이페이지')}
                   </Link>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="block w-full text-left px-3 py-2 text-gray-700 hover:text-blue-600 font-medium flex items-center"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    {getText('nav.logout', '로그아웃')}
+                  </button>
                 </>
               )}
             </div>
