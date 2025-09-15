@@ -4,24 +4,43 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { ExternalLink, Star, TrendingUp, DollarSign } from 'lucide-react';
 
-interface PopularProductsProps {
-  products: {
-    imageUrl?: string;
-    title?: string;
-    price?: number;
-    salesCount?: number;
-    growthRate?: number;
-    estimatedMargin?: number;
-  }[];
-  selectedPlatform: string;
-  onPlatformChange: (platform: string) => void;
-  loading: boolean;
-}
+  interface PopularProductsProps {
+    products: {
+      imageUrl?: string;
+      title?: string;
+      price?: number;
+      salesCount?: number;
+      growthRate?: number;
+      estimatedMargin?: number;
+      link?: string;
+      platform?: string;
+      description?: string;
+      brand?: string;
+      category?: string;
+      availability?: string;
+      rating?: number;
+      reviewCount?: number;
+      shippingInfo?: string;
+      tags?: string[];
+      originalPrice?: string;
+      discount?: number;
+      stock?: number;
+      seller?: string;
+      location?: string;
+      specifications?: Record<string, any>;
+    }[];
+    selectedPlatform: string;
+    onPlatformChange: (platform: string) => void;
+    selectedSortBy: string;
+    onSortByChange: (sortBy: string) => void;
+    loading: boolean;
+  }
 
 const platformLogos = {
   coupang: '/logos/coupang.png',
   naver: '/logos/naver.png',
   '11st': '/logos/11st.png',
+  '1688': '/logos/1688.png',
   aliexpress: '/logos/aliexpress.png',
   alibaba: '/logos/alibaba.png',
 };
@@ -30,6 +49,7 @@ const platformNames = {
   coupang: '쿠팡',
   naver: '네이버',
   '11st': '11번가',
+  '1688': '1688',
   aliexpress: '알리익스프레스',
   alibaba: '알리바바',
 };
@@ -38,9 +58,11 @@ export default function PopularProducts({
   products,
   selectedPlatform,
   onPlatformChange,
+  selectedSortBy,
+  onSortByChange,
   loading,
 }: PopularProductsProps) {
-  const platforms = ['coupang', 'naver', '11st', 'aliexpress', 'alibaba'];
+  const platforms = ['coupang', 'naver', '11st', '1688', 'aliexpress', 'alibaba'];
 
   return (
     <section className="py-20 bg-gray-50">
@@ -55,7 +77,7 @@ export default function PopularProducts({
         </div>
 
         {/* Platform Selector */}
-        <div className="flex flex-wrap justify-center gap-4 mb-12">
+        <div className="flex flex-wrap justify-center gap-4 mb-8">
           {platforms.map((platform) => (
             <button
               key={platform}
@@ -77,6 +99,21 @@ export default function PopularProducts({
               <span>{platformNames[platform as keyof typeof platformNames]}</span>
             </button>
           ))}
+        </div>
+
+        {/* Sorting Selector */}
+        <div className="flex justify-center mb-12">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
+            <select
+              value={selectedSortBy}
+              onChange={(e) => onSortByChange(e.target.value)}
+              className="px-4 py-2 border-0 bg-transparent text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md"
+            >
+              <option value="daily">일간 인기</option>
+              <option value="weekly">주간 인기</option>
+              <option value="monthly">월간 인기</option>
+            </select>
+          </div>
         </div>
 
         {/* Products Grid */}
@@ -121,51 +158,132 @@ export default function PopularProducts({
                     {product.title || '상품명 없음'}
                   </h3>
                   
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-500">가격</span>
-                      <span className="font-semibold text-gray-900">
-                        {product.price ? `₩${product.price.toLocaleString()}` : '가격 정보 없음'}
-                      </span>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-500">가격</span>
+                        <div className="text-right">
+                          {product.originalPrice && product.discount && (
+                            <div className="text-xs text-gray-400 line-through">
+                              ₩{parseInt(product.originalPrice).toLocaleString()}
+                            </div>
+                          )}
+                          <span className="font-semibold text-gray-900">
+                            {product.price ? `₩${product.price.toLocaleString()}` : '가격 정보 없음'}
+                          </span>
+                          {product.discount && (
+                            <span className="text-xs text-red-500 ml-1">
+                              -{product.discount}%
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {product.salesCount && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-500">판매량</span>
+                          <span className="text-sm text-gray-700">
+                            {product.salesCount.toLocaleString()}개
+                          </span>
+                        </div>
+                      )}
+                      
+                      {product.rating && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-500">평점</span>
+                          <div className="text-right">
+                            <span className="text-sm text-yellow-600 flex items-center">
+                              <Star className="w-4 h-4 mr-1" />
+                              {product.rating.toFixed(1)}
+                            </span>
+                            {product.reviewCount && (
+                              <div className="text-xs text-gray-400">
+                                ({product.reviewCount}개 리뷰)
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {product.growthRate && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-500">성장률</span>
+                          <span className="text-sm text-green-600 flex items-center">
+                            <TrendingUp className="w-4 h-4 mr-1" />
+                            {product.growthRate.toFixed(1)}%
+                          </span>
+                        </div>
+                      )}
+                      
+                      {product.estimatedMargin && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-500">예상 마진</span>
+                          <span className="text-sm text-blue-600 flex items-center">
+                            <DollarSign className="w-4 h-4 mr-1" />
+                            {product.estimatedMargin}%
+                          </span>
+                        </div>
+                      )}
+                      
+                      {product.brand && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-500">브랜드</span>
+                          <span className="text-sm text-gray-700">
+                            {product.brand}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {product.stock && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-500">재고</span>
+                          <span className="text-sm text-gray-700">
+                            {product.stock}개
+                          </span>
+                        </div>
+                      )}
+                      
+                      {product.shippingInfo && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-500">배송</span>
+                          <span className="text-sm text-gray-700">
+                            {product.shippingInfo}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {product.tags && product.tags.length > 0 && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-500">태그</span>
+                          <div className="flex flex-wrap gap-1">
+                            {product.tags.slice(0, 2).map((tag, index) => (
+                              <span key={index} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    
-                    {product.salesCount && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">판매량</span>
-                        <span className="text-sm text-gray-700">
-                          {product.salesCount.toLocaleString()}개
-                        </span>
-                      </div>
-                    )}
-                    
-                    {product.growthRate && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">성장률</span>
-                        <span className="text-sm text-green-600 flex items-center">
-                          <TrendingUp className="w-4 h-4 mr-1" />
-                          {product.growthRate}%
-                        </span>
-                      </div>
-                    )}
-                    
-                    {product.estimatedMargin && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">예상 마진</span>
-                        <span className="text-sm text-blue-600 flex items-center">
-                          <DollarSign className="w-4 h-4 mr-1" />
-                          {product.estimatedMargin}%
-                        </span>
-                      </div>
-                    )}
-                  </div>
                   
                   <div className="flex space-x-2">
-                    <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                    <button 
+                      onClick={() => {
+                        // TODO: Implement product detail modal or page
+                        console.log('View product details:', product);
+                      }}
+                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                    >
                       상세보기
                     </button>
-                    <button className="bg-gray-100 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
-                      <ExternalLink className="w-4 h-4" />
-                    </button>
+                    {product.link && product.link !== '#' && (
+                      <button 
+                        onClick={() => window.open(product.link, '_blank')}
+                        className="bg-gray-100 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+                        title="원본 상품 페이지 열기"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
