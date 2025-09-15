@@ -1,0 +1,154 @@
+.oauthContainer {
+  margin-top: 1.5rem;
+}
+
+.divider {
+  position: relative;
+  text-align: center;
+  margin: 1.5rem 0;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: #d1d5db;
+  }
+}
+
+.dividerText {
+  position: relative;
+  background-color: white;
+  padding: 0 1rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.oauthButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.oauthButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:focus {
+    outline: 2px solid #d1d5db; // fixed invalid "ring"
+    outline-offset: 2px;
+  }
+}
+
+.kakaoButton {
+  background-color: #fee500;
+  color: #000000;
+  border-color: #fee500;
+
+  &:hover {
+    background-color: #fdd835;
+    border-color: #fdd835;
+  }
+
+  &:focus {
+    outline: 2px solid #fee500;
+    outline-offset: 2px;
+  }
+}
+
+.naverButton {
+  background-color: #03c75a;
+  color: #ffffff;
+  border-color: #03c75a;
+
+  &:hover {
+    background-color: #02b351;
+    border-color: #02b351;
+  }
+
+  &:focus {
+    outline: 2px solid #03c75a;
+    outline-offset: 2px;
+  }
+}
+
+.kakaoIcon,
+.naverIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.5rem;
+}
+
+.buttonText {
+  font-weight: 500;
+}
+
+// Google OAuth button styling (for react-google-login)
+.googleWrapper {
+  /* This ensures CSS Modules are happy */
+  :global(.google-oauth-button) {
+    width: 100% !important;
+    height: 2.5rem !important;
+    border-radius: 0.375rem !important;
+    border: 1px solid #d1d5db !important;
+    background-color: white !important;
+    color: #374151 !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease-in-out !important;
+
+    &:hover {
+      transform: translateY(-1px) !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    &:active {
+      transform: translateY(0) !important;
+    }
+
+    &:focus {
+      outline: 2px solid #d1d5db !important;
+      outline-offset: 2px !important;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 640px) {
+  .oauthButtons {
+    gap: 0.5rem;
+  }
+
+  .oauthButton {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.8125rem;
+  }
+
+  .kakaoIcon,
+  .naverIcon {
+    width: 1.125rem;
+    height: 1.125rem;
+    margin-right: 0.375rem;
+  }
+}
