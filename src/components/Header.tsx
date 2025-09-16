@@ -44,9 +44,6 @@ export default function Header({ user }: HeaderProps) {
                   <ShoppingCart className="w-4 h-4 mr-1" />
                   {getText('nav.cart', '장바구니')}
                 </Link>
-                <Link href="/settings" className="text-gray-700 hover:text-blue-600 font-medium">
-                  {getText('nav.settings', '설정')}
-                </Link>
                 <Link href="/automation" className="text-gray-700 hover:text-blue-600 font-medium">
                   {getText('nav.automation', '자동화')}
                 </Link>
@@ -64,7 +61,7 @@ export default function Header({ user }: HeaderProps) {
                     <User className="w-5 h-5 text-gray-600" />
                   </div>
                   <span className="text-sm font-medium text-gray-700 hidden md:inline">
-                    {getText('nav.myPage', '마이페이지')}
+                    {user.name}
                   </span>
                 </Link>
               </div>
@@ -124,13 +121,6 @@ export default function Header({ user }: HeaderProps) {
                     {getText('nav.cart', '장바구니')}
                   </Link>
                   <Link
-                    href="/settings"
-                    className="block px-3 py-2 text-gray-700 hover:text-blue-600 font-medium"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {getText('nav.settings', '설정')}
-                  </Link>
-                  <Link
                     href="/automation"
                     className="block px-3 py-2 text-gray-700 hover:text-blue-600 font-medium"
                     onClick={() => setIsMenuOpen(false)}
@@ -143,7 +133,7 @@ export default function Header({ user }: HeaderProps) {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <User className="w-4 h-4 mr-2" />
-                    {getText('nav.myPage', '마이페이지')}
+                    {user.name}
                   </Link>
                   <button
                     onClick={() => {

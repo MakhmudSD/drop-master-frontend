@@ -20,14 +20,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
-      <body className={`${inter.variable} font-sans antialiased`}>
-        <I18nProvider>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-        </I18nProvider>
-      </body>
-    </html>
+     <html lang="ko">
+       <body className={`${inter.variable} font-sans antialiased`}>
+         <I18nProvider>
+           <AuthProvider>
+             {children}
+           </AuthProvider>
+         </I18nProvider>
+       </body>
+     </html>
   );
 }
