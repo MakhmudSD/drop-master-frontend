@@ -1,89 +1,297 @@
+import { useCallback } from 'react';
+import { useMutation, useQuery, useReactiveVar } from '@apollo/client/react';
 import { GET_CART_ITEMS, GET_CART_SUMMARY } from '@/lib/apollo/queries';
 import { ADD_TO_CART, UPDATE_CART_ITEM, REMOVE_FROM_CART, CLEAR_CART } from '@/lib/apollo/mutations';
 import { UseCartResult } from '@/lib/hooks.types';
-import { useMutation, useQuery } from '@apollo/client/react';
-import { CartItem } from '@/types';
+import { CartItem, AddToCartData, UpdateCartItemData } from '@/types/cart.types';
+import { cartCountVar, showNotification, updateCartCount } from '@/lib/apollo/store';
+
+// Types for mutation responses
+interface AddToCartResponse {
+  addCartItem: {
+    success: boolean;
+    cartItem?: CartItem;
+    message?: string;
+  };
+}
+
+interface UpdateCartItemResponse {
+  updateCartItem: {
+    success: boolean;
+    cartItem?: CartItem;
+    message?: string;
+  };
+}
+
+interface RemoveFromCartResponse {
+  removeCartItem: {
+    success: boolean;
+    message?: string;
+  };
+}
+
+interface ClearCartResponse {
+  clearCart: {
+    success: boolean;
+    message?: string;
+  };
+}
+
+interface CartSummaryData {
+  cartSummary: {
+    totalItems: number;
+    totalAmount: number;
+    shippingCost?: number;
+    taxAmount?: number;
+    discountAmount?: number;
+    finalAmount: number;
+  };
+}
 
 export const useCart = (): UseCartResult => {
-  const { data: cartItemsData, loading: itemsLoading, error: itemsError, refetch: refetchItems } = useQuery<{ cartItems: CartItem[] }>(GET_CART_ITEMS, {
-    errorPolicy: 'all'
+  // Reactive variable for cart count
+  const cartCount = useReactiveVar(cartCountVar);
+
+  // Query cart items
+  const { 
+    data: cartItemsData, 
+    loading: itemsLoading, 
+    error: itemsError, 
+    refetch: refetchItems 
+  } = useQuery<{ cartItems: CartItem[] }>(GET_CART_ITEMS, {
+    errorPolicy: 'all',
+    notifyOnNetworkStatusChange: true,
+    onCompleted: (data) => {
+      // Update reactive cart count
+      const itemCount = data?.cartItems?.reduce((total, item) => total + item.quantity, 0) || 0;
+      updateCartCount(itemCount);
+    },
+    onError: (error) => {
+      console.error('Failed to fetch cart items:', error);
+      showNotification('Failed to load cart items', 'error');
+    },
   });
 
-  const { data: cartSummaryData, loading: summaryLoading, error: summaryError } = useQuery<{ cartSummary: { totalItems: number; finalAmount: number } }>(GET_CART_SUMMARY, {
-    errorPolicy: 'all'
+  // Query cart summary
+  const { 
+    data: cartSummaryData, 
+    loading: summaryLoading, 
+    error: summaryError 
+  } = useQuery<CartSummaryData>(GET_CART_SUMMARY, {
+    errorPolicy: 'all',
+    notifyOnNetworkStatusChange: true,
+    onError: (error) => {
+      console.error('Failed to fetch cart summary:', error);
+    },
   });
 
-  const [addToCartMutation] = useMutation(ADD_TO_CART, {
-    refetchQueries: [GET_CART_ITEMS, GET_CART_SUMMARY]
-  });
+  // Add to cart mutation
+  const [addToCartMutation, { loading: addToCartLoading }] = useMutation<AddToCartResponse>(
+    ADD_TO_CART,
+    {
+      errorPolicy: 'all',
+      refetchQueries: [
+        { query: GET_CART_ITEMS },
+        { query: GET_CART_SUMMARY },
+      ],
+      awaitRefetchQueries: true,
+      onCompleted: (data) => {
+        if (data?.addCartItem?.success) {
+          showNotification(
+            data.addCartItem.message || 'Product added to cart successfully!',
+            'success'
+          );
+        } else {
+          showNotification(
+            data?.addCartItem?.message || 'Failed to add product to cart',
+            'error'
+          );
+        }
+      },
+      onError: (error) => {
+        console.error('Add to cart mutation error:', error);
+        showNotification('Failed to add product to cart', 'error');
+      },
+    }
+  );
 
-  const [updateCartItemMutation] = useMutation(UPDATE_CART_ITEM, {
-    refetchQueries: [GET_CART_ITEMS, GET_CART_SUMMARY]
-  });
+  // Update cart item mutation
+  const [updateCartItemMutation, { loading: updateCartLoading }] = useMutation<UpdateCartItemResponse>(
+    UPDATE_CART_ITEM,
+    {
+      errorPolicy: 'all',
+      refetchQueries: [
+        { query: GET_CART_ITEMS },
+        { query: GET_CART_SUMMARY },
+      ],
+      awaitRefetchQueries: true,
+      onCompleted: (data) => {
+        if (data?.updateCartItem?.success) {
+          showNotification('Cart updated successfully!', 'success');
+        } else {
+          showNotification(
+            data?.updateCartItem?.message || 'Failed to update cart item',
+            'error'
+          );
+        }
+      },
+      onError: (error) => {
+        console.error('Update cart item error:', error);
+        showNotification('Failed to update cart item', 'error');
+      },
+    }
+  );
 
-  const [removeFromCartMutation] = useMutation(REMOVE_FROM_CART, {
-    refetchQueries: [GET_CART_ITEMS, GET_CART_SUMMARY]
-  });
+  // Remove from cart mutation
+  const [removeFromCartMutation, { loading: removeFromCartLoading }] = useMutation<RemoveFromCartResponse>(
+    REMOVE_FROM_CART,
+    {
+      errorPolicy: 'all',
+      refetchQueries: [
+        { query: GET_CART_ITEMS },
+        { query: GET_CART_SUMMARY },
+      ],
+      awaitRefetchQueries: true,
+      onCompleted: (data) => {
+        if (data?.removeCartItem?.success) {
+          showNotification('Item removed from cart', 'success');
+        } else {
+          showNotification(
+            data?.removeCartItem?.message || 'Failed to remove item from cart',
+            'error'
+          );
+        }
+      },
+      onError: (error) => {
+        console.error('Remove from cart error:', error);
+        showNotification('Failed to remove item from cart', 'error');
+      },
+    }
+  );
 
-  const [clearCartMutation] = useMutation(CLEAR_CART, {
-    refetchQueries: [GET_CART_ITEMS, GET_CART_SUMMARY]
-  });
+  // Clear cart mutation
+  const [clearCartMutation, { loading: clearCartLoading }] = useMutation<ClearCartResponse>(
+    CLEAR_CART,
+    {
+      errorPolicy: 'all',
+      refetchQueries: [
+        { query: GET_CART_ITEMS },
+        { query: GET_CART_SUMMARY },
+      ],
+      awaitRefetchQueries: true,
+      onCompleted: (data) => {
+        if (data?.clearCart?.success) {
+          updateCartCount(0);
+          showNotification('Cart cleared successfully!', 'success');
+        } else {
+          showNotification(
+            data?.clearCart?.message || 'Failed to clear cart',
+            'error'
+          );
+        }
+      },
+      onError: (error) => {
+        console.error('Clear cart error:', error);
+        showNotification('Failed to clear cart', 'error');
+      },
+    }
+  );
 
-  const addToCart = async (productId: string, quantity: number, specifications?: any) => {
+  // Memoized cart operations
+  const addToCart = useCallback(async (
+    productId: string, 
+    quantity: number, 
+    specifications?: Record<string, unknown>
+  ): Promise<CartItem | null> => {
     try {
       const { data } = await addToCartMutation({
-        variables: { productId, quantity, specifications }
+        variables: {
+          productId,
+          quantity,
+          specifications: specifications ? JSON.stringify(specifications) : null,
+        },
       });
-      return data;
+
+      if (data?.addCartItem?.success && data.addCartItem.cartItem) {
+        return data.addCartItem.cartItem;
+      }
+
+      throw new Error(data?.addCartItem?.message || 'Failed to add item to cart');
     } catch (error) {
       console.error('Add to cart error:', error);
       throw error;
     }
-  };
+  }, [addToCartMutation]);
 
-  const updateCartItem = async (id: string, quantity: number) => {
+  const updateCartItem = useCallback(async (
+    id: string, 
+    quantity: number
+  ): Promise<CartItem | null> => {
     try {
       const { data } = await updateCartItemMutation({
-        variables: { id, quantity }
+        variables: { id, quantity },
       });
-      return data;
+
+      if (data?.updateCartItem?.success && data.updateCartItem.cartItem) {
+        return data.updateCartItem.cartItem;
+      }
+
+      throw new Error(data?.updateCartItem?.message || 'Failed to update cart item');
     } catch (error) {
       console.error('Update cart item error:', error);
       throw error;
     }
-  };
+  }, [updateCartItemMutation]);
 
-  const removeFromCart = async (id: string) => {
+  const removeFromCart = useCallback(async (id: string): Promise<boolean> => {
     try {
       const { data } = await removeFromCartMutation({
-        variables: { id }
+        variables: { id },
       });
-      return data;
+
+      if (data?.removeCartItem?.success) {
+        return true;
+      }
+
+      throw new Error(data?.removeCartItem?.message || 'Failed to remove item from cart');
     } catch (error) {
       console.error('Remove from cart error:', error);
       throw error;
     }
-  };
+  }, [removeFromCartMutation]);
 
-  const clearCart = async () => {
+  const clearCart = useCallback(async (): Promise<boolean> => {
     try {
       const { data } = await clearCartMutation();
-      return data;
+
+      if (data?.clearCart?.success) {
+        return true;
+      }
+
+      throw new Error(data?.clearCart?.message || 'Failed to clear cart');
     } catch (error) {
       console.error('Clear cart error:', error);
       throw error;
     }
-  };
+  }, [clearCartMutation]);
+
+  // Calculate loading state
+  const loading = itemsLoading || 
+                  summaryLoading || 
+                  addToCartLoading || 
+                  updateCartLoading || 
+                  removeFromCartLoading || 
+                  clearCartLoading;
 
   return {
     cartItems: cartItemsData?.cartItems || [],
-    totalItems: cartSummaryData?.cartSummary?.totalItems || 0,
+    totalItems: cartSummaryData?.cartSummary?.totalItems || cartCount,
     totalAmount: cartSummaryData?.cartSummary?.finalAmount || 0,
-    loading: itemsLoading || summaryLoading,
-    error: itemsError || summaryError,
+    loading,
+    error: itemsError || summaryError || null,
     addToCart,
     updateCartItem,
     removeFromCart,
-    clearCart
+    clearCart,
   };
 };

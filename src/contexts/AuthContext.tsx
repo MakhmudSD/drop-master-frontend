@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User } from '@/shared/types';
+import { User } from '@/types';
 
 interface AuthContextType {
   user: User | null;
@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
 
         // If no stored user, check token with backend
-        const token = localStorage.getItem('accessToken');
+        const token = localStorage.getItem('jwtToken');
         if (token) {
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/auth/profile`, {
             headers: {
@@ -65,17 +65,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               // Store user data for future use
               localStorage.setItem('user', JSON.stringify(userData.data.user));
             } else {
-              localStorage.removeItem('accessToken');
+              localStorage.removeItem('jwtToken');
               localStorage.removeItem('user');
             }
           } else {
-            localStorage.removeItem('accessToken');
+            localStorage.removeItem('jwtToken');
             localStorage.removeItem('user');
           }
         }
       } catch (error) {
         console.error('Auth check failed:', error);
-        localStorage.removeItem('accessToken');
+        localStorage.removeItem('jwtToken');
         localStorage.removeItem('user');
       } finally {
         setLoading(false);
@@ -99,8 +99,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const data = await response.json();
       
       if (data.success) {
-        const { user: userData, accessToken } = data.data;
-        localStorage.setItem('accessToken', accessToken);
+        const { user: userData, token } = data.data;
+        localStorage.setItem('jwtToken', token);
         setUser(userData);
       } else {
         throw new Error(data.message || 'Login failed');
@@ -127,8 +127,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const data = await response.json();
       
       if (data.success) {
-        const { user: newUser, accessToken } = data.data;
-        localStorage.setItem('accessToken', accessToken);
+        const { user: newUser, token } = data.data;
+        localStorage.setItem('jwtToken', token);
         setUser(newUser);
       } else {
         throw new Error(data.message || 'Registration failed');
@@ -142,7 +142,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('accessToken');
+    localStorage.removeItem('jwtToken');
     localStorage.removeItem('user');
     setUser(null);
   };

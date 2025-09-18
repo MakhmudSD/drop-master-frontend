@@ -1,18 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuthRest';
+import { useUser } from '@/hooks/useUser';
 import { useI18n } from '@/hooks/useI18n';
 import { User, Menu, X, ShoppingCart, LogOut } from 'lucide-react';
 import LanguageSwitcher from './LanguageSwitcher';
 
 interface HeaderProps {
-  user: { name: string } | null;
+  user?: { name: string } | null; // Make optional since we'll use reactive state
 }
 
-export default function Header({ user }: HeaderProps) {
+export default function Header({ user: propUser }: HeaderProps) {
   const { logout } = useAuth();
+  const { user: reactiveUser } = useUser();
+  const [isClient, setIsClient] = useState(false);
+  
+  // Ensure client-side hydration safety
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
+  // Use reactive user state, fallback to prop user for compatibility
+  // Only use reactive user on client side to prevent hydration mismatches
+  const user = isClient ? (reactiveUser || propUser) : propUser;
   const { getText } = useI18n();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -35,7 +47,7 @@ export default function Header({ user }: HeaderProps) {
             <Link href="/" className="text-gray-700 hover:text-blue-600 font-medium">
               {getText('nav.home', '홈')}
             </Link>
-            {user && (
+            {isClient && user && (
               <>
                 <Link href="/dashboard" className="text-gray-700 hover:text-blue-600 font-medium">
                   {getText('nav.dashboard', '대시보드')}
@@ -54,7 +66,7 @@ export default function Header({ user }: HeaderProps) {
           {/* User Menu */}
           <div className="flex items-center space-x-4">
             <LanguageSwitcher />
-            {user ? (
+            {isClient && user ? (
               <div className="flex items-center space-x-4">
                 <Link href="/profile" className="flex items-center space-x-2 hover:text-blue-600">
                   <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
@@ -103,7 +115,7 @@ export default function Header({ user }: HeaderProps) {
               >
                 {getText('nav.home', '홈')}
               </Link>
-              {user && (
+              {isClient && user && (
                 <>
                   <Link
                     href="/dashboard"

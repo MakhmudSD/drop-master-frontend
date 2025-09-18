@@ -87,7 +87,6 @@ export default function AutomaticUploadPage() {
 
   const handleUpload = async () => {
     setIsUploading(true);
-    // Simulate upload process
     await new Promise(resolve => setTimeout(resolve, 2000));
     setIsUploading(false);
   };

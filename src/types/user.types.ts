@@ -1,12 +1,24 @@
 export interface User {
-  id: string;
+  _id: string;
+  id?: string; // For backward compatibility
   email: string;
   name: string;
+  password?: string;
+  profileImage?: string;
   avatar?: string;
   phone?: string;
   address?: string;
-  isActive?: boolean;
-  role?: string;
+  provider?: 'google' | 'kakao' | 'naver' | 'local';
+  googleId?: string;
+  kakaoId?: string;
+  naverId?: string;
+  preferences?: {
+    language: string;
+    currency: string;
+  };
+  role: string;
+  isActive: boolean;
+  accessToken?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

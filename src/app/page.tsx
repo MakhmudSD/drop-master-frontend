@@ -1,38 +1,34 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState } from 'react';
+import { useUser } from '@/hooks/useUser';
 import PopularProducts from '@/components/PopularProducts';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import Features from '@/components/Features';
 import Footer from '@/components/Footer';
 import { useProducts } from '@/hooks/useProductsRest';
-import { Product } from '@/types/product.types';
 
 export default function Home() {
-  const { user, loading } = useAuth();
+  const { user } = useUser();
 
-  const [selectedPlatform, setSelectedPlatform] = useState('coupang');
+  const [selectedPlatform, setSelectedPlatform] = useState('naver');
   const [selectedSortBy, setSelectedSortBy] = useState('daily');
 
   // Use products hook - it automatically refetches when dependencies change
-  const { products: popularProducts, loading: productsLoading, error } = useProducts(
+  const { 
+    products: popularProducts, 
+    loading: productsLoading, 
+    error,
+    hasData,
+    hasCredentials
+  } = useProducts(
     selectedPlatform,
-    8,
+    20,
     selectedSortBy
   );
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">로딩 중...</p>
-        </div>
-      </div>
-    );
-  }
+  // No need for auth loading check since reactive user state updates immediately
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -47,6 +43,9 @@ export default function Home() {
           selectedSortBy={selectedSortBy}
           onSortByChange={setSelectedSortBy}
           loading={productsLoading}
+          hasData={hasData}
+          hasCredentials={hasCredentials}
+          error={error}
         />
       </main>
       <Footer />

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { User, Product, Order, Automation, ScrapingRun, ApiResponse, PaginationInfo } from '@/shared/types';
+import { User, Product, Order, Automation, ScrapingRun, ApiResponse, PaginationMeta, PaginationInfo } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 

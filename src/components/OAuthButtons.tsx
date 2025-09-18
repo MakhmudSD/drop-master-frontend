@@ -34,6 +34,7 @@ const OAuthButtons: React.FC<OAuthButtonsProps> = ({ mode, onError }) => {
 
       <div className={styles.oauthButtons}>
         <button type="button" onClick={handleGoogleLogin} className={`${styles.oauthButton} ${styles.googleButton}`}>
+          <div className={styles.googleIcon}></div>
           <span className={styles.buttonText}>{mode === 'login' ? 'Google로 로그인' : 'Google로 회원가입'}</span>
         </button>
 

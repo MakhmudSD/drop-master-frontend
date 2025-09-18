@@ -2,9 +2,9 @@
 const nextConfig = {
 	reactStrictMode: true,
 	env: {
-		REACT_APP_API_URL: process.env.NEXT_PUBLIC_API_URL,
-		REACT_APP_API_GRAPHQL_URL: process.env.NEXT_PUBLIC_API_GRAPHQL_URL,
-		REACT_APP_API_WS: process.env.NEXT_PUBLIC_API_WS,
+		NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+		NEXT_PUBLIC_API_URL_GRAPHQL: process.env.NEXT_PUBLIC_API_URL_GRAPHQL,
+		NEXT_PUBLIC_API_WS: process.env.NEXT_PUBLIC_API_WS,
 	},
 	images: {
 		remotePatterns: [
@@ -16,25 +16,19 @@ const nextConfig = {
 			},
 			{
 				protocol: 'https',
-				hostname: 'images.unsplash.com',
+				hostname: '*.coupang.com',
 				port: '',
 				pathname: '/**',
 			},
 			{
 				protocol: 'https',
-				hostname: 'picsum.photos',
+				hostname: '*.naver.com',
 				port: '',
 				pathname: '/**',
 			},
 			{
 				protocol: 'https',
-				hostname: 'cdn.pixabay.com',
-				port: '',
-				pathname: '/**',
-			},
-			{
-				protocol: 'https',
-				hostname: 'source.unsplash.com',
+				hostname: '*.11st.co.kr',
 				port: '',
 				pathname: '/**',
 			},

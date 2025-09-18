@@ -3,12 +3,18 @@ import { UseProductsResult } from '@/lib/hooks.types';
 import { Product } from '@/types/product.types';
 import { useQuery } from '@apollo/client/react';
 
-export const useProducts = (platform: string, limit?: number, sortBy?: string): UseProductsResult => {
+interface UseProductsParams {
+  platform: string;
+  limit?: number;
+  sortBy?: string;
+}
+
+export const useProducts = ({ platform, limit = 8, sortBy = 'daily' }: UseProductsParams): UseProductsResult => {
   const { data, loading, error, refetch } = useQuery<{ popularProducts: Product[] }>(GET_POPULAR_PRODUCTS, {
     variables: {
       platform,
-      limit: limit || 8,
-      sortBy: sortBy || 'daily'
+      limit,
+      sortBy,
     },
     errorPolicy: 'all',
     notifyOnNetworkStatusChange: true,
@@ -17,43 +23,67 @@ export const useProducts = (platform: string, limit?: number, sortBy?: string): 
   return {
     products: data?.popularProducts || [],
     loading,
-    error,
-    refetch: (variables) => refetch(variables)
+    error: error || null,
+    refetch: async (variables) => {
+      await refetch(variables);
+    },
   };
 };
 
-export const useProduct = (id: string) => {
+interface UseProductParams {
+  id: string;
+}
+
+interface UseSearchProductsParams {
+  query: string;
+  platform?: string;
+  category?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export const useProduct = ({ id }: UseProductParams) => {
   const { data, loading, error, refetch } = useQuery<{ product: Product }>(GET_PRODUCT, {
     variables: { id },
     errorPolicy: 'all',
-    skip: !id
+    skip: !id,
   });
 
   return {
     product: data?.product || null,
     loading,
-    error,
-    refetch
+    error: error || null,
+    refetch: async () => {
+      await refetch();
+    },
   };
 };
 
-export const useSearchProducts = (query: string, platform?: string, category?: string, limit?: number, offset?: number) => {
+export const useSearchProducts = ({ 
+  query, 
+  platform, 
+  category, 
+  limit = 20, 
+  offset = 0 
+}: UseSearchProductsParams) => {
   const { data, loading, error, refetch } = useQuery<{ searchProducts: Product[] }>(SEARCH_PRODUCTS, {
     variables: {
       query,
       platform,
       category,
-      limit: limit || 20,
-      offset: offset || 0
+      limit,
+      offset,
     },
     errorPolicy: 'all',
-    skip: !query
+    skip: !query,
   });
 
   return {
     products: data?.searchProducts || [],
     loading,
-    error,
-    refetch
+    error: error || null,
+    refetch: async (variables?: Partial<UseSearchProductsParams>) => {
+      await refetch(variables);
+    },
   };
 };

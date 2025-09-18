@@ -20,33 +20,34 @@ export interface UseMutationResult<TData = any, TVariables = any> {
 
 // Specific hook types for our app
 export interface UseAuthResult {
-  user: any | null;
+  user: import('@/types/user.types').User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (userData: any) => Promise<void>;
+  register: (userData: Partial<import('@/types/user.types').User>) => Promise<void>;
   logout: () => void;
   googleLogin: () => void;
   kakaoLogin: () => void;
   naverLogin: () => void;
+  refreshUserData: () => Promise<void>;
 }
 
 export interface UseProductsResult {
-  products: any[];
+  products: import('@/types/product.types').Product[];
   loading: boolean;
-  error?: any;
-  refetch: (variables?: { platform?: string; limit?: number; sortBy?: string }) => Promise<any>;
+  error?: Error | null;
+  refetch: (variables?: { platform?: string; limit?: number; sortBy?: string }) => Promise<void>;
 }
 
 export interface UseCartResult {
-  cartItems: any[];
+  cartItems: import('@/types/cart.types').CartItem[];
   totalItems: number;
   totalAmount: number;
   loading: boolean;
-  error?: any;
-  addToCart: (productId: string, quantity: number, specifications?: any) => Promise<any>;
-  updateCartItem: (id: string, quantity: number) => Promise<any>;
-  removeFromCart: (id: string) => Promise<any>;
-  clearCart: () => Promise<any>;
+  error?: Error | null;
+  addToCart: (productId: string, quantity: number, specifications?: Record<string, unknown>) => Promise<import('@/types/cart.types').CartItem | null>;
+  updateCartItem: (id: string, quantity: number) => Promise<import('@/types/cart.types').CartItem | null>;
+  removeFromCart: (id: string) => Promise<boolean>;
+  clearCart: () => Promise<boolean>;
 }
 
 export interface UseOrdersResult {

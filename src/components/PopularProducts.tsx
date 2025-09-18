@@ -2,58 +2,37 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { ExternalLink, Star, TrendingUp, DollarSign, ChevronDown } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ExternalLink, Star, TrendingUp, DollarSign, ChevronDown, ShoppingCart } from 'lucide-react';
+import { useCart } from '@/hooks/useCart';
+import { useUser } from '@/hooks/useUser';
+
+import { Product } from '@/types/product.types';
 
   interface PopularProductsProps {
-    products: {
-      imageUrl?: string;
-      title?: string;
-      price?: number;
-      salesCount?: number;
-      growthRate?: number;
-      estimatedMargin?: number;
-      link?: string;
-      platform?: string;
-      description?: string;
-      brand?: string;
-      category?: string;
-      availability?: string;
-      rating?: number;
-      reviewCount?: number;
-      shippingInfo?: string;
-      tags?: string[];
-      originalPrice?: string;
-      discount?: number;
-      stock?: number;
-      seller?: string;
-      location?: string;
-      specifications?: Record<string, any>;
-      competitionLevel?: 'high' | 'medium' | 'low';
-      alibabaPrice?: number;
-    }[];
+    products: Product[];
     selectedPlatform: string;
     onPlatformChange: (platform: string) => void;
     selectedSortBy: string;
     onSortByChange: (sortBy: string) => void;
     loading: boolean;
+    hasData: boolean;
+    hasCredentials: boolean;
+    error?: Error | null;
   }
 
 const platformLogos = {
   coupang: '/logos/coupang.png',
   naver: '/logos/naver.png',
   '11st': '/logos/11st.png',
-  '1688': '/logos/1688.png',
   aliexpress: '/logos/aliexpress.png',
-  alibaba: '/logos/alibaba.png',
 };
 
 const platformNames = {
   coupang: '쿠팡',
   naver: '네이버 플러스스토어',
   '11st': '11번가',
-  '1688': '1688',
   aliexpress: '알리익스프레스',
-  alibaba: '알리바바',
 };
 
 const getCompetitionBadge = (level?: 'high' | 'medium' | 'low') => {
@@ -76,10 +55,23 @@ export default function PopularProducts({
   selectedSortBy,
   onSortByChange,
   loading,
+  hasData,
+  hasCredentials,
+  error,
 }: PopularProductsProps) {
-  const platforms = ['coupang', 'naver', '11st', '1688', 'aliexpress', 'alibaba'];
+  const platforms = ['naver', 'coupang', '11st', 'aliexpress']; // Put naver first since it's most likely to work
   const [isPlatformDropdownOpen, setIsPlatformDropdownOpen] = useState(false);
+  const [addingToCart, setAddingToCart] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { addToCart } = useCart();
+  const { isAuthenticated } = useUser();
+  const router = useRouter();
+
+  // Ensure client-side hydration safety
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -94,6 +86,52 @@ export default function PopularProducts({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  const handleAddToCart = async (product: any, index: number) => {
+    // Only proceed on client side
+    if (!isClient) return;
+    
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
+    setAddingToCart(index.toString());
+    try {
+      // Generate a proper product ID based on platform and product info
+      const productId = product.id || `${selectedPlatform}-${product.title?.slice(0, 20).replace(/[^a-zA-Z0-9]/g, '')}-${index}`;
+      
+      // Convert specifications to JSON string format expected by mutation
+      const specifications = JSON.stringify({
+        title: product.title || '제품명 없음',
+        price: product.price || 0,
+        imageUrl: product.imageUrl || '',
+        platform: selectedPlatform,
+        sourcePrice: (product.alibabaPrice || 0) * 1200, // Convert USD to KRW roughly
+        marginRate: product.estimatedMargin || 0,
+        estimatedProfit: (product.price || 0) - ((product.alibabaPrice || 0) * 1200),
+        category: product.category || '',
+        brand: product.brand || '',
+        originalData: product
+      });
+
+      const cartItem = await addToCart(productId, 1, specifications);
+      
+      if (cartItem) {
+        // Show success message first
+        alert('Product successfully added');
+        
+        // Then redirect to cart page
+        router.push('/cart');
+      }
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+      alert('장바구니 추가에 실패했습니다. 다시 시도해 주세요.');
+    } finally {
+      setAddingToCart(null);
+    }
+  };
 
   return (
     <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
@@ -115,9 +153,13 @@ export default function PopularProducts({
                 >
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 relative">
-                      <div className="w-8 h-8 bg-green-500 rounded flex items-center justify-center text-white font-bold text-sm">
-                        N
-                      </div>
+                      <Image
+                        src={platformLogos[selectedPlatform as keyof typeof platformLogos]}
+                        alt={platformNames[selectedPlatform as keyof typeof platformNames]}
+                        width={32}
+                        height={32}
+                        className="object-contain"
+                      />
                       <div className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
                         <span className="text-white text-xs font-bold">+</span>
                       </div>
@@ -145,6 +187,7 @@ export default function PopularProducts({
                             src={platformLogos[platform as keyof typeof platformLogos]}
                             alt={platformNames[platform as keyof typeof platformNames]}
                             fill
+                            sizes="32px"
                             className="object-contain"
                           />
                         </div>
@@ -197,16 +240,16 @@ export default function PopularProducts({
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
             {products.map((product, index) => {
               const competitionBadge = getCompetitionBadge(product.competitionLevel);
               return (
                 <div
                   key={index}
-                  className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-lg transition-all duration-200 hover:border-purple-200"
+                  className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-lg transition-all duration-200 hover:border-purple-200 flex flex-col h-full"
                 >
                   {/* Product Image */}
-                  <div className="w-full h-48 bg-gray-100 rounded-lg mb-4 overflow-hidden">
+                  <div className="w-full h-48 bg-gray-100 rounded-lg mb-4 overflow-hidden flex-shrink-0">
                     {product.imageUrl ? (
                       <Image
                         src={product.imageUrl}
@@ -223,53 +266,70 @@ export default function PopularProducts({
                   </div>
 
                   {/* Category and Competition Badge */}
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between mb-3 flex-shrink-0">
                     <span className="text-sm text-gray-500">{product.category || '이어폰/헤드폰'}</span>
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${competitionBadge.color}`}>
                       {competitionBadge.text}
                     </span>
                   </div>
 
-                  {/* Product Title */}
-                  <h3 className="font-semibold text-gray-900 mb-3 line-clamp-2 text-base">
-                    {product.title || '에어팟 프로 2세대 무선 이어폰'}
-                  </h3>
+                  {/* Content Area - Allow to grow */}
+                  <div className="flex-grow">
+                    {/* Product Title */}
+                    <h3 className="font-semibold text-gray-900 mb-3 line-clamp-2 text-base">
+                      {product.title || '에어팟 프로 2세대 무선 이어폰'}
+                    </h3>
 
-                  {/* Price */}
-                  <div className="text-2xl font-bold text-gray-900 mb-4">
-                    {product.price ? `${product.price.toLocaleString()}원` : '289,000원'}
-                  </div>
+                    {/* Price */}
+                    <div className="text-2xl font-bold text-gray-900 mb-4">
+                      {product.price ? `${product.price.toLocaleString()}원` : '가격 문의'}
+                    </div>
 
-                  {/* Metrics Grid */}
-                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    {/* Metrics Grid */}
+                    <div className="grid grid-cols-3 gap-4 mb-4">
                     <div className="text-center">
                       <div className="text-xs text-gray-500 mb-1">판매량</div>
                       <div className="text-sm font-semibold text-gray-900">
-                        {product.salesCount ? `${product.salesCount.toLocaleString()}` : '2,360'}
+                        {product.salesCount ? product.salesCount.toLocaleString() : 'N/A'}
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-xs text-gray-500 mb-1">성장률</div>
-                      <div className="text-sm font-semibold text-green-600">
-                        {product.growthRate ? `+${product.growthRate.toFixed(1)}%` : '+15.2%'}
+                      <div className="text-xs text-gray-500 mb-1">평점</div>
+                      <div className="text-sm font-semibold text-yellow-600">
+                        {product.rating ? `${product.rating.toFixed(1)}★` : 'N/A'}
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-xs text-gray-500 mb-1">예상 마진</div>
-                      <div className="text-sm font-semibold text-green-600">
-                        {product.estimatedMargin ? `${product.estimatedMargin}%` : '87%'}
+                      <div className="text-xs text-gray-500 mb-1">리뷰 수</div>
+                      <div className="text-sm font-semibold text-gray-600">
+                        {product.reviewCount ? product.reviewCount.toLocaleString() : 'N/A'}
                       </div>
                     </div>
                   </div>
 
-                  {/* Alibaba Price */}
-                  <div className="text-center text-sm text-green-600 mb-4 bg-green-50 py-2 rounded-lg">
-                    알리바바 가격: <span className="font-semibold">${product.alibabaPrice || 12.50}</span>
+                    {/* Alibaba Price */}
+                    <div className="text-center text-sm text-green-600 mb-4 bg-green-50 py-2 rounded-lg">
+                      알리바바 가격: <span className="font-semibold">${product.alibabaPrice || 12.50}</span>
+                    </div>
                   </div>
 
-                  {/* Register Button */}
-                  <button className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-purple-700 transition-colors">
-                    드랍쉬핑 상품으로 등록하기
+                  {/* Register Button - Always at bottom */}
+                  <button 
+                    onClick={() => handleAddToCart(product, index)}
+                    disabled={addingToCart === index.toString()}
+                    className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed mt-auto"
+                  >
+                    {addingToCart === index.toString() ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        추가 중...
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        상품 등록하기
+                      </>
+                    )}
                   </button>
                 </div>
               );
@@ -277,17 +337,42 @@ export default function PopularProducts({
           </div>
         )}
 
-        {!loading && products.length === 0 && (
+        {!loading && !hasData && (
           <div className="text-center py-20">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <ExternalLink className="w-8 h-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              상품을 불러오는 중입니다
-            </h3>
-            <p className="text-gray-600">
-              {platformNames[selectedPlatform as keyof typeof platformNames]}에서 인기 상품을 가져오고 있습니다.
-            </p>
+            
+            {error ? (
+              <>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  데이터를 불러올 수 없습니다
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  {error.message === 'No data available' ? 
+                    `${platformNames[selectedPlatform as keyof typeof platformNames]}에서 데이터를 찾을 수 없습니다.` :
+                    (error.message || '알 수 없는 오류가 발생했습니다.')
+                  }
+                </p>
+                {error.message !== 'No data available' && (
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    다시 시도
+                  </button>
+                )}
+              </>
+            ) : (
+              <>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  상품이 없습니다
+                </h3>
+                <p className="text-gray-600">
+                  {platformNames[selectedPlatform as keyof typeof platformNames]}에서 상품을 찾을 수 없습니다.
+                </p>
+              </>
+            )}
           </div>
         )}
 

@@ -2,8 +2,12 @@ import { gql } from '@apollo/client';
 
 // Cart Mutations
 export const ADD_TO_CART = gql`
-  mutation AddToCart($productId: ID!, $quantity: Int!, $specifications: JSON) {
-    addToCart(productId: $productId, quantity: $quantity, specifications: $specifications) {
+  mutation AddCartItem($productId: ID!, $quantity: Int!, $specifications: String) {
+    addCartItem(input: {
+      productId: $productId
+      quantity: $quantity
+      specifications: $specifications
+    }) {
       success
       cartItem {
         id
@@ -13,6 +17,9 @@ export const ADD_TO_CART = gql`
         price
         image
         platform
+        specifications
+        createdAt
+        updatedAt
       }
       message
     }
@@ -21,12 +28,19 @@ export const ADD_TO_CART = gql`
 
 export const UPDATE_CART_ITEM = gql`
   mutation UpdateCartItem($id: ID!, $quantity: Int!) {
-    updateCartItem(id: $id, quantity: $quantity) {
+    updateCartItem(input: { id: $id, quantity: $quantity }) {
       success
       cartItem {
         id
+        productId
+        productName
         quantity
         price
+        image
+        platform
+        specifications
+        createdAt
+        updatedAt
       }
       message
     }
@@ -34,8 +48,8 @@ export const UPDATE_CART_ITEM = gql`
 `;
 
 export const REMOVE_FROM_CART = gql`
-  mutation RemoveFromCart($id: ID!) {
-    removeFromCart(id: $id) {
+  mutation RemoveCartItem($id: ID!) {
+    removeCartItem(id: $id) {
       success
       message
     }
