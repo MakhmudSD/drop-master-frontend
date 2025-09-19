@@ -74,6 +74,8 @@ export async function fetchProductsByPlatform(
       limit: limit.toString(),
     });
 
+    console.log('🌐 [productSources] Fetching products:', { platform, query, limit, baseUrl });
+
     // Try to get auth token but don't require it
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
     const headers: Record<string, string> = {
@@ -82,15 +84,32 @@ export async function fetchProductsByPlatform(
     
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+      console.log('🌐 [productSources] Using auth token:', token.substring(0, 10) + '...');
+    } else {
+      console.log('🌐 [productSources] No auth token found');
     }
 
-    const response = await fetch(`${baseUrl}/api/products?${params}`, {
+    const apiUrl = `${baseUrl}/api/products?${params}`;
+    console.log('🌐 [productSources] Calling API:', apiUrl);
+
+    const response = await fetch(apiUrl, {
       method: 'GET',
       headers,
     });
 
+    console.log('🌐 [productSources] API response status:', response.status, response.statusText);
+
     if (!response.ok) {
-      console.error(`API error for ${platform}: ${response.status} ${response.statusText}`);
+      console.error(`🌐 [productSources] API error for ${platform}: ${response.status} ${response.statusText}`);
+      
+      // Try to get error details from response
+      try {
+        const errorData = await response.text();
+        console.error('🌐 [productSources] Error response body:', errorData);
+      } catch (e) {
+        console.error('🌐 [productSources] Could not read error response');
+      }
+      
       return {
         products: [],
         hasData: false,
@@ -101,14 +120,18 @@ export async function fetchProductsByPlatform(
     }
 
     const data: ProductApiResponse = await response.json();
+    console.log('🌐 [productSources] API response data:', data);
     
-    return {
+    const result = {
       products: data.products || [],
       hasData: (data.products || []).length > 0,
       hasCredentials: true, // Backend will handle credential checking
       error: data.message && data.products?.length === 0 ? data.message : undefined,
       platform,
     };
+    
+    console.log('🌐 [productSources] Final result:', result);
+    return result;
 
   } catch (error) {
     console.error(`Error fetching products from ${platform}:`, error);

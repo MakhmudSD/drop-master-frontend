@@ -102,8 +102,8 @@ export default function PopularProducts({
       // Generate a proper product ID based on platform and product info
       const productId = product.id || `${selectedPlatform}-${product.title?.slice(0, 20).replace(/[^a-zA-Z0-9]/g, '')}-${index}`;
       
-      // Convert specifications to JSON string format expected by mutation
-      const specifications = JSON.stringify({
+      // Convert specifications to object format expected by mutation
+      const specifications = {
         title: product.title || '제품명 없음',
         price: product.price || 0,
         imageUrl: product.imageUrl || '',
@@ -114,7 +114,7 @@ export default function PopularProducts({
         category: product.category || '',
         brand: product.brand || '',
         originalData: product
-      });
+      };
 
       const cartItem = await addToCart(productId, 1, specifications);
       

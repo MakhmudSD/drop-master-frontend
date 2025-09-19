@@ -1,6 +1,6 @@
 // Export all custom hooks
 export * from './useProducts';
-export { useProducts as useProductsRest } from './useProductsRest';
+export * from './useFetchProducts';
 export * from './useCart';
 export * from './useOrders';
 export * from './useAutomation';

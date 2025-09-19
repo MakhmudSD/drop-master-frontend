@@ -57,26 +57,33 @@ export const useProducts = (
     const requestPlatform = params?.platform || platform;
     const requestLimit = params?.limit || limit;
     
+    console.log('🔍 [useProductsRest] Starting fetch:', { requestPlatform, requestLimit, params });
+    
     setLoading(true);
     setError(null);
     setHasData(false);
 
     try {
+      console.log('🔍 [useProductsRest] Calling fetchProductsByPlatform...');
       const result: ProductFetchResult = await fetchProductsByPlatform(requestPlatform, '인기상품', requestLimit);
+      
+      console.log('🔍 [useProductsRest] Fetch result:', result);
       
       setProducts(result.products);
       setHasData(result.hasData);
       setHasCredentials(result.hasCredentials);
       
       if (result.error && !result.hasData) {
+        console.log('🔍 [useProductsRest] Setting error:', result.error);
         setError(new Error(result.error));
       }
     } catch (err) {
-      console.error('Error fetching products:', err);
+      console.error('🔍 [useProductsRest] Error fetching products:', err);
       setError(err instanceof Error ? err : new Error('상품을 불러오는 중 오류가 발생했습니다'));
       setProducts([]);
       setHasData(false);
     } finally {
+      console.log('🔍 [useProductsRest] Fetch completed, setting loading to false');
       setLoading(false);
     }
   }, [platform, limit]);

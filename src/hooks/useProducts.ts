@@ -6,15 +6,15 @@ import { useQuery } from '@apollo/client/react';
 interface UseProductsParams {
   platform: string;
   limit?: number;
-  sortBy?: string;
+  query?: string;
 }
 
-export const useProducts = ({ platform, limit = 8, sortBy = 'daily' }: UseProductsParams): UseProductsResult => {
+export const useProducts = ({ platform, limit = 8, query }: UseProductsParams): UseProductsResult => {
   const { data, loading, error, refetch } = useQuery<{ popularProducts: Product[] }>(GET_POPULAR_PRODUCTS, {
     variables: {
       platform,
       limit,
-      sortBy,
+      query: query || '인기상품',
     },
     errorPolicy: 'all',
     notifyOnNetworkStatusChange: true,

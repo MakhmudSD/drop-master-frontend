@@ -7,7 +7,7 @@ import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import Features from '@/components/Features';
 import Footer from '@/components/Footer';
-import { useProducts } from '@/hooks/useProductsRest';
+import { useProducts } from '@/hooks/useProducts';
 
 export default function Home() {
   const { user } = useUser();
@@ -15,18 +15,24 @@ export default function Home() {
   const [selectedPlatform, setSelectedPlatform] = useState('naver');
   const [selectedSortBy, setSelectedSortBy] = useState('daily');
 
+  console.log('🏠 [HomePage] Render with:', { selectedPlatform, selectedSortBy });
+
   // Use products hook - it automatically refetches when dependencies change
   const { 
     products: popularProducts, 
     loading: productsLoading, 
-    error,
-    hasData,
-    hasCredentials
-  } = useProducts(
-    selectedPlatform,
-    20,
-    selectedSortBy
-  );
+    error
+  } = useProducts({
+    platform: selectedPlatform,
+    limit: 20,
+    query: '인기상품'
+  });
+
+  console.log('🏠 [HomePage] Hook result:', { 
+    productsCount: popularProducts.length, 
+    loading: productsLoading, 
+    error: error?.message 
+  });
 
   // No need for auth loading check since reactive user state updates immediately
 
@@ -43,8 +49,8 @@ export default function Home() {
           selectedSortBy={selectedSortBy}
           onSortByChange={setSelectedSortBy}
           loading={productsLoading}
-          hasData={hasData}
-          hasCredentials={hasCredentials}
+          hasData={popularProducts.length > 0}
+          hasCredentials={true}
           error={error}
         />
       </main>

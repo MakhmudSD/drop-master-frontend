@@ -1,53 +1,18 @@
 # Products Hooks Usage Guide
 
-This guide explains how to use the refactored product hooks that follow clean coding principles and proper error handling.
+This guide explains how to use the GraphQL-based product hooks that follow clean coding principles and proper error handling.
 
 ## Available Hooks
 
-### 1. `useProducts` (REST Version) - `useProductsRest.ts`
+### 1. `useProducts` (GraphQL Version) - `useProducts.ts`
 
 **Features:**
-- ✅ Uses `process.env.NEXT_PUBLIC_API_URL` instead of hardcoded localhost
-- ✅ Comprehensive error handling for network failures and API errors
-- ✅ Fallback dataset for demo purposes when API fails
-- ✅ Safe defaults to prevent undefined errors
-- ✅ Compatible with Next.js Image component
-- ✅ Clean and reusable `refetch` function
-- ✅ Proper TypeScript typing with no `any` types
-- ✅ Removed duplicated logic
-
-**Usage:**
-```typescript
-import { useProducts } from '@/hooks/useProductsRest';
-
-// Basic usage
-const { products, loading, error, refetch } = useProducts({
-  platform: 'coupang',
-  limit: 8,
-  sortBy: 'daily'
-});
-
-// Using with custom parameters
-const { products, loading, error, refetch } = useProducts({
-  platform: 'naver',
-  limit: 12,
-  sortBy: 'weekly'
-});
-
-// Refetch with new parameters
-await refetch({
-  platform: 'gmarket',
-  limit: 16,
-  sortBy: 'monthly'
-});
-```
-
-### 2. `useProducts` (GraphQL Version) - `useProducts.ts`
-
-**Features:**
-- ✅ Updated to match REST version API consistency
+- ✅ GraphQL-based with Apollo Client
 - ✅ Proper TypeScript typing
 - ✅ Clean refetch function
+- ✅ Fallback products for each platform (20 unique per platform)
+- ✅ Platform-specific data handling
+- ✅ Error handling and loading states
 
 **Usage:**
 ```typescript
@@ -57,7 +22,7 @@ import { useProducts, useProduct, useSearchProducts } from '@/hooks/useProducts'
 const { products, loading, error, refetch } = useProducts({
   platform: 'coupang',
   limit: 8,
-  sortBy: 'daily'
+  query: '인기상품'
 });
 
 // Get single product
@@ -72,6 +37,32 @@ const { products, loading, error, refetch } = useSearchProducts({
   category: '전자기기',
   limit: 20,
   offset: 0
+});
+```
+
+### 2. `useFetchProducts` (Multi-Platform GraphQL) - `useFetchProducts.ts`
+
+**Features:**
+- ✅ Multi-platform support (Naver, Coupang, AliExpress, 11st)
+- ✅ Real Naver API integration for blog search
+- ✅ Platform-specific fallback products
+- ✅ Multiple queries support
+- ✅ Clean error handling
+
+**Usage:**
+```typescript
+import { useFetchProducts } from '@/hooks/useFetchProducts';
+
+// Basic usage
+const { products, loading, error, refetch } = useFetchProducts({
+  platform: 'naver',
+  queries: ['스마트폰', '노트북']
+});
+
+// Single query
+const { products, loading, error, refetch } = useFetchProducts({
+  platform: 'coupang',
+  queries: ['electronics']
 });
 ```
 

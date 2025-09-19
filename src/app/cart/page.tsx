@@ -63,53 +63,42 @@ export default function CartPage() {
     }
 
     // Extract actual values from parsed specifications
-    const sourcePrice = parsedSpecs.sourcePrice || (safeNumber(item.price) * 0.7);
-    const marginRate = parsedSpecs.marginRate || 30;
+    const sourcePrice = (parsedSpecs as any).sourcePrice || (safeNumber(item.price) * 0.7);
+    const marginRate = (parsedSpecs as any).marginRate || 30;
 
     return {
       id: item.id,
       productId: item.productId,
-      title: safeString(parsedSpecs.title || item.productName, '상품명 없음'),
+      title: safeString((parsedSpecs as any).title || item.productName, '상품명 없음'),
       productName: safeString(item.productName, '상품명 없음'),
       price: safeNumber(item.price),
       sourcePrice: safeNumber(sourcePrice),
       marginRate: safeNumber(marginRate),
-      platform: safeString(parsedSpecs.platform || item.platform, 'unknown'),
-      image: safeString(parsedSpecs.imageUrl || item.image, '/images/placeholder.png'),
-      imageUrl: safeString(parsedSpecs.imageUrl || item.image, '/images/placeholder.png'),
+      platform: safeString((parsedSpecs as any).platform || item.platform, 'unknown'),
+      image: safeString((parsedSpecs as any).imageUrl || item.image, '/images/placeholder.png'),
+      imageUrl: safeString((parsedSpecs as any).imageUrl || item.image, '/images/placeholder.png'),
       quantity: safeNumber(item.quantity, 1),
-      estimatedProfit: safeNumber(parsedSpecs.estimatedProfit) || (safeNumber(item.price) - safeNumber(sourcePrice)) * safeNumber(item.quantity, 1),
+      estimatedProfit: safeNumber((parsedSpecs as any).estimatedProfit) || (safeNumber(item.price) - safeNumber(sourcePrice)) * safeNumber(item.quantity, 1),
       specifications: parsedSpecs,
     };
   });
 
   // Wait for auth state to be determined before redirecting
-  useEffect(() => {
-    if (!cartLoading) {
-      // Longer delay to ensure reactive state is fully propagated
-      const checkAuth = setTimeout(() => {
-        setAuthChecked(true);
-        
-        // Check multiple sources for authentication state
-        const accessToken = localStorage.getItem('accessToken');
-        const jwtToken = localStorage.getItem('jwtToken');
-        const userFromStorage = localStorage.getItem('user');
-        
-        // Only redirect if we're absolutely sure user is not authenticated
-        if (!isAuthenticated && !accessToken && !jwtToken && !userFromStorage) {
-          console.log('Cart: No authentication found, redirecting to login');
-          router.push('/login');
-        } else if ((accessToken || jwtToken)) {
-          // User has token, allow access to cart regardless of reactive state
-          console.log('Cart: Token found, allowing cart access');
-        } else {
-          console.log('Cart: User is authenticated, proceeding');
-        }
-      }, 1000); // Increased initial delay
-      
-      return () => clearTimeout(checkAuth);
+useEffect(() => {
+  if (!cartLoading) {
+    const accessToken = localStorage.getItem('accessToken');
+    const jwtToken = localStorage.getItem('jwtToken');
+    const userFromStorage = localStorage.getItem('user');
+
+    const hasToken = !!accessToken || !!jwtToken;
+    const hasUser = !!userFromStorage;
+
+    // Only redirect if there’s no reactive auth and no tokens stored
+    if (!isAuthenticated && !hasToken && !hasUser) {
+      router.push('/login');
     }
-  }, [isAuthenticated, cartLoading, router]);
+  }
+}, [isAuthenticated, cartLoading, router]);
 
   // Enhanced cart operations with Apollo integration and error handling
   const handleRemoveItem = useCallback(async (itemId: string) => {

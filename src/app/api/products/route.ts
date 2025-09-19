@@ -42,19 +42,28 @@ const PLATFORM_CONFIGS = {
 
 // Fetch products from Naver Shopping API
 async function fetchNaverProducts(query: string, limit: number = 20): Promise<Product[]> {
+  console.log('🛒 [NaverAPI] Starting fetchNaverProducts:', { query, limit });
+  
   try {
     const clientId = process.env.NAVER_SHOPPING_API_KEY;
     const clientSecret = process.env.NAVER_SHOPPING_SECRET_KEY;
     
+    console.log('🛒 [NaverAPI] Environment check:', { 
+      hasClientId: !!clientId, 
+      hasClientSecret: !!clientSecret,
+      clientIdLength: clientId?.length,
+      secretLength: clientSecret?.length
+    });
+    
     if (!clientId || !clientSecret) {
-      console.log('Naver API keys not configured');
+      console.error('🛒 [NaverAPI] API keys not configured');
       return [];
     }
 
     const searchQuery = encodeURIComponent(query);
     const url = `https://openapi.naver.com/v1/search/shop.json?query=${searchQuery}&display=${limit}&sort=sim`;
 
-    console.log('Fetching from Naver API:', url);
+    console.log('🛒 [NaverAPI] Calling Naver API:', { url, searchQuery });
 
     const response = await fetch(url, {
       headers: {
@@ -64,13 +73,22 @@ async function fetchNaverProducts(query: string, limit: number = 20): Promise<Pr
       },
     });
 
+    console.log('🛒 [NaverAPI] Response status:', response.status, response.statusText);
+
     if (!response.ok) {
-      console.error(`Naver API error: ${response.status} ${response.statusText}`);
+      console.error(`🛒 [NaverAPI] API error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('🛒 [NaverAPI] Error response:', errorText);
       return [];
     }
 
     const data = await response.json();
-    console.log('Naver API response:', data);
+    console.log('🛒 [NaverAPI] Response data:', { 
+      itemCount: data.items?.length || 0, 
+      total: data.total,
+      start: data.start,
+      display: data.display
+    });
     
     if (!data.items || !Array.isArray(data.items)) {
       console.log('No items found in Naver response');
@@ -173,16 +191,22 @@ export async function GET(request: NextRequest) {
     const platform = searchParams.get('platform');
     const limit = parseInt(searchParams.get('limit') || '20');
 
+    console.log('🚀 [API] Received request:', { query, platform, limit, url: request.url });
+
     let results: Product[] = [];
     let message = '';
 
     if (platform && platform in PLATFORM_FETCHERS) {
       // Fetch from specific platform
+      console.log('🚀 [API] Fetching from specific platform:', platform);
       const fetcher = PLATFORM_FETCHERS[platform as keyof typeof PLATFORM_FETCHERS];
       results = await fetcher(query, limit);
       
+      console.log('🚀 [API] Platform fetch results:', { platform, count: results.length, results: results.slice(0, 2) });
+      
       if (results.length === 0) {
         message = `No data found for ${PLATFORM_CONFIGS[platform as keyof typeof PLATFORM_CONFIGS]?.name || platform}`;
+        console.log('🚀 [API] No results, setting message:', message);
       }
     } else {
       // Fetch from all enabled platforms

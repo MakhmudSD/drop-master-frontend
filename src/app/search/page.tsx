@@ -43,7 +43,7 @@ export default function SearchPage() {
 
     setAddingToCart(product.id);
     try {
-      const specifications = JSON.stringify({
+      const specifications = {
         title: product.title,
         price: product.price || 0,
         imageUrl: product.imageUrl,
@@ -52,7 +52,7 @@ export default function SearchPage() {
         brand: product.brand || '',
         url: product.url,
         originalData: product
-      });
+      };
 
       const cartItem = await addToCart(product.id, 1, specifications);
       
