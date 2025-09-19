@@ -7,14 +7,16 @@ interface UseProductsParams {
   platform: string;
   limit?: number;
   query?: string;
+  timeFilter?: string;
 }
 
-export const useProducts = ({ platform, limit = 8, query }: UseProductsParams): UseProductsResult => {
+export const useProducts = ({ platform, limit = 8, query, timeFilter }: UseProductsParams): UseProductsResult => {
   const { data, loading, error, refetch } = useQuery<{ popularProducts: Product[] }>(GET_POPULAR_PRODUCTS, {
     variables: {
       platform,
       limit,
       query: query || '인기상품',
+      timeFilter: timeFilter || 'daily',
     },
     errorPolicy: 'all',
     notifyOnNetworkStatusChange: true,

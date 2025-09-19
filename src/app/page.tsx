@@ -25,7 +25,8 @@ export default function Home() {
   } = useProducts({
     platform: selectedPlatform,
     limit: 20,
-    query: '인기상품'
+    query: '인기상품',
+    timeFilter: selectedSortBy
   });
 
   console.log('🏠 [HomePage] Hook result:', { 

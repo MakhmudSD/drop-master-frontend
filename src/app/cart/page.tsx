@@ -83,22 +83,7 @@ export default function CartPage() {
     };
   });
 
-  // Wait for auth state to be determined before redirecting
-useEffect(() => {
-  if (!cartLoading) {
-    const accessToken = localStorage.getItem('accessToken');
-    const jwtToken = localStorage.getItem('jwtToken');
-    const userFromStorage = localStorage.getItem('user');
-
-    const hasToken = !!accessToken || !!jwtToken;
-    const hasUser = !!userFromStorage;
-
-    // Only redirect if there’s no reactive auth and no tokens stored
-    if (!isAuthenticated && !hasToken && !hasUser) {
-      router.push('/login');
-    }
-  }
-}, [isAuthenticated, cartLoading, router]);
+  // Cart is accessible to all users, no auth required
 
   // Enhanced cart operations with Apollo integration and error handling
   const handleRemoveItem = useCallback(async (itemId: string) => {

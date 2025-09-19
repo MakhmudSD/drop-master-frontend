@@ -257,12 +257,17 @@ export default function PopularProducts({
                         width={300}
                         height={200}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const fallback = target.parentElement?.querySelector('.image-fallback') as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
                       />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <ExternalLink className="w-12 h-12" />
-                      </div>
-                    )}
+                    ) : null}
+                    <div className={`w-full h-full flex items-center justify-center text-gray-400 image-fallback ${product.imageUrl ? 'hidden' : 'flex'}`}>
+                      <ExternalLink className="w-12 h-12" />
+                    </div>
                   </div>
 
                   {/* Category and Competition Badge */}
