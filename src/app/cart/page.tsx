@@ -7,7 +7,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import EditProductModal from '@/components/EditProductModal';
 import { useCart, useUser, useNotification } from '@/hooks';
-import { ShoppingCart, Plus, Minus, Trash2, CreditCard, Package, Truck, Edit, AlertCircle } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, CreditCard, Package, Truck, Edit } from 'lucide-react';
 
 interface CartItem {
   id: string;
@@ -40,15 +40,25 @@ const safeString = (value: unknown, fallback: string = ''): string => {
 };
 
 export default function CartPage() {
-  // Use Apollo reactive state for cart management
-  const { user, isAuthenticated } = useUser();
+  const { user } = useUser();
   const { cartItems: apolloCartItems, loading: cartLoading, updateCartItem, removeFromCart, clearCart } = useCart();
   const { showNotification } = useNotification();
-  
   const router = useRouter();
+  
   const [editingProduct, setEditingProduct] = useState<CartItem | null>(null);
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
-  const [authChecked, setAuthChecked] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Log what we received from Apollo
+  console.log('[CartPage] Apollo cart items received:', apolloCartItems.length, 'items');
+  if (apolloCartItems.length > 0) {
+    console.log('[CartPage] First item:', apolloCartItems[0]);
+  }
 
   // Transform Apollo cart items to local format for compatibility
   const cartItems: CartItem[] = apolloCartItems.map(item => {
@@ -59,7 +69,7 @@ export default function CartPage() {
         ? JSON.parse(item.specifications) 
         : (item.specifications || {});
     } catch (error) {
-      console.warn('Failed to parse cart item specifications:', error);
+      console.warn('Failed to parse cart specifications');
     }
 
     // Extract actual values from parsed specifications
@@ -83,7 +93,9 @@ export default function CartPage() {
     };
   });
 
-  // Cart is accessible to all users, no auth required
+  console.log('[CartPage] Transformed cart items:', cartItems.length, 'items');
+  console.log('[CartPage] Will show empty?', cartItems.length === 0);
+  console.log('[CartPage] Will show products?', cartItems.length > 0);
 
   // Enhanced cart operations with Apollo integration and error handling
   const handleRemoveItem = useCallback(async (itemId: string) => {
@@ -183,38 +195,38 @@ export default function CartPage() {
     }
   }, [cartItems.length, showNotification, handleClearCart, router]);
 
-  // Loading and authentication states
-  if (cartLoading || !authChecked) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">
-            {cartLoading ? '장바구니를 불러오는 중...' : '인증 확인 중...'}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-          <p className="text-gray-600 mb-4">로그인이 필요합니다.</p>
-          <button
-            onClick={() => router.push('/login')}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            로그인하기
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   const { subtotal, totalProfit, totalItems } = calculateTotals();
+
+  // Don't render until mounted to prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header user={user} />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Show loading only for cart data
+  if (cartLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header user={user} />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex justify-center items-center py-20">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">장바구니를 불러오는 중...</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -245,13 +257,17 @@ export default function CartPage() {
         {cartItems.length === 0 ? (
           <div className="text-center py-20">
             <ShoppingCart className="h-24 w-24 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-gray-900 mb-2">장바구니가 비어있습니다</h3>
-            <p className="text-gray-500 mb-6">상품을 추가하여 드롭쉬핑을 시작하세요</p>
+            <h3 className="text-xl font-medium text-gray-900 mb-2">
+              {!user ? '로그인이 필요합니다' : '장바구니가 비어있습니다'}
+            </h3>
+            <p className="text-gray-500 mb-6">
+              {!user ? '장바구니를 사용하려면 로그인해주세요' : '상품을 추가하여 드롭쉬핑을 시작하세요'}
+            </p>
             <button
-              onClick={() => router.push('/products')}
+              onClick={() => router.push(user ? '/' : '/login?redirect=/cart')}
               className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
             >
-              상품 둘러보기
+              {user ? '상품 둘러보기' : '로그인하기'}
             </button>
           </div>
         ) : (

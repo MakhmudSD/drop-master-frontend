@@ -3,7 +3,7 @@ import { GET_CART_ITEMS, GET_CART_SUMMARY } from '@/lib/apollo/queries';
 import { ADD_TO_CART, UPDATE_CART_ITEM, REMOVE_FROM_CART, CLEAR_CART } from '@/lib/apollo/mutations';
 import { UseCartResult } from '@/lib/hooks.types';
 import { CartItem } from '@/types/cart.types';
-import { cartCountVar, showNotification, updateCartCount } from '@/lib/apollo/store';
+import { cartCountVar, showNotification, updateCartCount, userVar } from '@/lib/apollo/store';
 import { OperationVariables } from '@apollo/client';
 import { useMutation, useQuery, useReactiveVar } from '@apollo/client/react';
 
@@ -51,30 +51,57 @@ interface CartSummaryData {
 
 export const useCart = (): UseCartResult => {
   const cartCount = useReactiveVar(cartCountVar);
+  const user = useReactiveVar(userVar);
+  
+  // Check for token (check both keys for OAuth compatibility)
+  const token = typeof window !== 'undefined' 
+    ? (localStorage.getItem('jwtToken') || localStorage.getItem('accessToken'))
+    : null;
+  const shouldFetchCart = !!token;
+
+  console.log('[useCart] Should fetch cart?', shouldFetchCart, 'Token exists:', !!token);
 
   // --- Cart Items Query ---
   const { data: cartItemsData, loading: itemsLoading, error: itemsError, refetch: refetchItems } = useQuery<{ cartItems: CartItem[] }, OperationVariables>(GET_CART_ITEMS, {
     errorPolicy: 'all',
     notifyOnNetworkStatusChange: true,
+    skip: !shouldFetchCart,
+    fetchPolicy: 'network-only',
+  });
+
+  console.log('[useCart] Query result:', { 
+    loading: itemsLoading,
+    error: itemsError?.message,
+    dataExists: !!cartItemsData,
+    itemsLength: cartItemsData?.cartItems?.length || 0
   });
 
   useEffect(() => {
+    console.log('[useCart] Cart updated - items:', cartItemsData?.cartItems?.length || 0);
+    
     if (cartItemsData?.cartItems) {
       const itemCount = cartItemsData.cartItems.reduce((total, item) => total + item.quantity, 0) || 0;
       updateCartCount(itemCount);
+    } else if (!shouldFetchCart) {
+      updateCartCount(0);
     }
-  }, [cartItemsData]);
+  }, [cartItemsData, shouldFetchCart]);
 
   // --- Cart Summary Query ---
   const { data: cartSummaryData, loading: summaryLoading, error: summaryError } = useQuery<CartSummaryData>(GET_CART_SUMMARY, {
     errorPolicy: 'all',
     notifyOnNetworkStatusChange: true,
+    skip: !shouldFetchCart,
+    fetchPolicy: 'network-only',
   });
 
   // --- Mutations ---
   const [addToCartMutation, { loading: addToCartLoading }] = useMutation<AddToCartResponse>(ADD_TO_CART, {
     errorPolicy: 'all',
-    refetchQueries: [{ query: GET_CART_ITEMS }, { query: GET_CART_SUMMARY }],
+    refetchQueries: [
+      { query: GET_CART_ITEMS },
+      { query: GET_CART_SUMMARY }
+    ],
     awaitRefetchQueries: true,
     onCompleted: (data) => {
       if (data?.addCartItem?.success) {
@@ -84,7 +111,7 @@ export const useCart = (): UseCartResult => {
       }
     },
     onError: (error) => {
-      console.error('Add to cart error:', error);
+      console.error('[useCart] Add to cart error:', error);
       showNotification('Failed to add product to cart', 'error');
     },
   });
@@ -144,17 +171,25 @@ export const useCart = (): UseCartResult => {
   // --- Cart Operations ---
   const addToCart = useCallback(async (productId: string, quantity: number, specifications?: Record<string, unknown>): Promise<CartItem | null> => {
     try {
-      const { data } = await addToCartMutation({
+      const { data, errors } = await addToCartMutation({
         variables: {
           productId,
           quantity,
           specifications: specifications ? JSON.stringify(specifications) : null,
         },
       });
-      if (data?.addCartItem?.success && data.addCartItem.cartItem) return data.addCartItem.cartItem;
+      
+      if (errors) {
+        throw new Error(errors[0]?.message || 'GraphQL error');
+      }
+      
+      if (data?.addCartItem?.success && data.addCartItem.cartItem) {
+        return data.addCartItem.cartItem;
+      }
+      
       throw new Error(data?.addCartItem?.message || 'Failed to add item');
     } catch (error) {
-      console.error(error);
+      console.error('[useCart] Error:', error);
       throw error;
     }
   }, [addToCartMutation]);

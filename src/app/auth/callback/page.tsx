@@ -18,7 +18,8 @@ export default function AuthCallback() {
       }
 
       try {
-        // Save JWT to localStorage
+        // Save JWT to localStorage (save as both for compatibility)
+        localStorage.setItem('jwtToken', token);
         localStorage.setItem('accessToken', token);
 
         // Fetch user profile from backend

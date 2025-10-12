@@ -195,7 +195,7 @@ export default function EditProductModal({ isOpen, onClose, product, onSave }: E
               type="text"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
+              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white ${
                 errors.title ? 'border-red-300' : 'border-gray-300'
               }`}
               placeholder="상품명을 입력하세요"
@@ -213,7 +213,7 @@ export default function EditProductModal({ isOpen, onClose, product, onSave }: E
                 type="number"
                 value={formData.price}
                 onChange={(e) => setFormData(prev => ({ ...prev, price: Number(e.target.value) }))}
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
+                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white ${
                   errors.price ? 'border-red-300' : 'border-gray-300'
                 }`}
                 placeholder="0"
@@ -230,7 +230,7 @@ export default function EditProductModal({ isOpen, onClose, product, onSave }: E
                 type="number"
                 value={formData.sourcePrice}
                 onChange={(e) => setFormData(prev => ({ ...prev, sourcePrice: Number(e.target.value) }))}
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
+                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white ${
                   errors.sourcePrice ? 'border-red-300' : 'border-gray-300'
                 }`}
                 placeholder="0"
@@ -249,7 +249,7 @@ export default function EditProductModal({ isOpen, onClose, product, onSave }: E
               type="number"
               value={formData.quantity}
               onChange={(e) => setFormData(prev => ({ ...prev, quantity: Number(e.target.value) }))}
-              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
+              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white ${
                 errors.quantity ? 'border-red-300' : 'border-gray-300'
               }`}
               placeholder="1"
@@ -260,24 +260,24 @@ export default function EditProductModal({ isOpen, onClose, product, onSave }: E
 
           {/* Profit Calculation */}
           {formData.price > 0 && formData.sourcePrice > 0 && (
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="text-sm font-medium text-gray-900 mb-2">수익 계산</h3>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span>단위 수익:</span>
-                  <span className="font-medium text-green-600">
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <h3 className="text-sm font-semibold text-blue-900 mb-3">💰 수익 계산</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700">단위 수익:</span>
+                  <span className="font-semibold text-green-700 text-base">
                     ₩{(formData.price - formData.sourcePrice).toLocaleString()}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span>총 수익:</span>
-                  <span className="font-medium text-green-600">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700">총 수익:</span>
+                  <span className="font-semibold text-green-700 text-base">
                     ₩{((formData.price - formData.sourcePrice) * formData.quantity).toLocaleString()}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span>마진율:</span>
-                  <span className="font-medium">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700">마진율:</span>
+                  <span className="font-semibold text-blue-700 text-base">
                     {Math.round(((formData.price - formData.sourcePrice) / formData.price) * 100)}%
                   </span>
                 </div>

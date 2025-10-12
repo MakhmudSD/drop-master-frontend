@@ -9,24 +9,23 @@ import { User, Menu, X, ShoppingCart, LogOut } from 'lucide-react';
 import LanguageSwitcher from './LanguageSwitcher';
 
 interface HeaderProps {
-  user?: { name: string } | null; // Make optional since we'll use reactive state
+  user?: { name: string } | null;
 }
 
 export default function Header({ user: propUser }: HeaderProps) {
   const { logout } = useAuth();
   const { user: reactiveUser } = useUser();
-  const [isClient, setIsClient] = useState(false);
+  const { getText } = useI18n();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   
-  // Ensure client-side hydration safety
+  // Wait for client-side mount to prevent hydration mismatch
   useEffect(() => {
-    setIsClient(true);
+    setMounted(true);
   }, []);
   
   // Use reactive user state, fallback to prop user for compatibility
-  // Only use reactive user on client side to prevent hydration mismatches
-  const user = isClient ? (reactiveUser || propUser) : propUser;
-  const { getText } = useI18n();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const user = reactiveUser || propUser;
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -47,11 +46,8 @@ export default function Header({ user: propUser }: HeaderProps) {
             <Link href="/" className="text-gray-700 hover:text-blue-600 font-medium">
               {getText('nav.home', '홈')}
             </Link>
-            {isClient && user && (
+            {mounted && user && (
               <>
-                <Link href="/dashboard" className="text-gray-700 hover:text-blue-600 font-medium">
-                  {getText('nav.dashboard', '대시보드')}
-                </Link>
                 <Link href="/cart" className="text-gray-700 hover:text-blue-600 font-medium flex items-center">
                   <ShoppingCart className="w-4 h-4 mr-1" />
                   {getText('nav.cart', '장바구니')}
@@ -66,32 +62,36 @@ export default function Header({ user: propUser }: HeaderProps) {
           {/* User Menu */}
           <div className="flex items-center space-x-4">
             <LanguageSwitcher />
-            {isClient && user ? (
-              <div className="flex items-center space-x-4">
-                <Link href="/profile" className="flex items-center space-x-2 hover:text-blue-600">
-                  <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-gray-600" />
+            {mounted && (
+              <>
+                {user ? (
+                  <div className="flex items-center space-x-4">
+                    <Link href="/profile" className="flex items-center space-x-2 hover:text-blue-600">
+                      <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                        <User className="w-5 h-5 text-gray-600" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-700 hidden md:inline">
+                        {user.name}
+                      </span>
+                    </Link>
                   </div>
-                  <span className="text-sm font-medium text-gray-700 hidden md:inline">
-                    {user.name}
-                  </span>
-                </Link>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-4">
-                <Link
-                  href="/login"
-                  className="text-gray-700 hover:text-blue-600 font-medium"
-                >
-                  {getText('nav.login', '로그인')}
-                </Link>
-                <Link
-                  href="/register"
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
-                >
-                  {getText('nav.register', '회원가입')}
-                </Link>
-              </div>
+                ) : (
+                  <div className="flex items-center space-x-4">
+                    <Link
+                      href="/login"
+                      className="text-gray-700 hover:text-blue-600 font-medium"
+                    >
+                      {getText('nav.login', '로그인')}
+                    </Link>
+                    <Link
+                      href="/register"
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
+                    >
+                      {getText('nav.register', '회원가입')}
+                    </Link>
+                  </div>
+                )}
+              </>
             )}
 
             {/* Mobile menu button */}
@@ -115,15 +115,8 @@ export default function Header({ user: propUser }: HeaderProps) {
               >
                 {getText('nav.home', '홈')}
               </Link>
-              {isClient && user && (
+              {mounted && user && (
                 <>
-                  <Link
-                    href="/dashboard"
-                    className="block px-3 py-2 text-gray-700 hover:text-blue-600 font-medium"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {getText('nav.dashboard', '대시보드')}
-                  </Link>
                   <Link
                     href="/cart"
                     className="block px-3 py-2 text-gray-700 hover:text-blue-600 font-medium flex items-center"

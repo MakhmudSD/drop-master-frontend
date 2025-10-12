@@ -1,5 +1,5 @@
 import { useReactiveVar } from '@apollo/client/react';
-import { userVar, cartCountVar, isAuthenticated, getCurrentUser } from '@/lib/apollo/store';
+import { userVar, cartCountVar, isAuthenticated } from '@/lib/apollo/store';
 import { User } from '@/types/user.types';
 
 interface UseUserResult {

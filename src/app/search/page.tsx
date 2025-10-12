@@ -36,8 +36,10 @@ export default function SearchPage() {
   };
 
   const handleAddToCart = async (product: Product) => {
-    if (!isAuthenticated) {
-      router.push('/login');
+    const hasToken = typeof window !== 'undefined' && localStorage.getItem('jwtToken');
+    
+    if (!user || !hasToken) {
+      router.push('/login?redirect=/search');
       return;
     }
 

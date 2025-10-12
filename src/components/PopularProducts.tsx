@@ -59,19 +59,13 @@ export default function PopularProducts({
   hasCredentials,
   error,
 }: PopularProductsProps) {
-  const platforms = ['naver', 'coupang', '11st', 'aliexpress']; // Put naver first since it's most likely to work
+  const platforms = ['naver', 'coupang', '11st', 'aliexpress'];
   const [isPlatformDropdownOpen, setIsPlatformDropdownOpen] = useState(false);
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
-  const [isClient, setIsClient] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { addToCart } = useCart();
-  const { isAuthenticated } = useUser();
+  const { user } = useUser();
   const router = useRouter();
-
-  // Ensure client-side hydration safety
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -82,52 +76,44 @@ export default function PopularProducts({
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleAddToCart = async (product: any, index: number) => {
-    // Only proceed on client side
-    if (!isClient) return;
-    
-    // Check if user is authenticated
-    if (!isAuthenticated) {
-      router.push('/login');
-      return;
-    }
-
+  const handleAddToCart = async (product: Product, index: number) => {
     setAddingToCart(index.toString());
+    
     try {
-      // Generate a proper product ID based on platform and product info
-      const productId = product.id || `${selectedPlatform}-${product.title?.slice(0, 20).replace(/[^a-zA-Z0-9]/g, '')}-${index}`;
+      const productId = product.id || `${selectedPlatform}-${Date.now()}-${index}`;
       
-      // Convert specifications to object format expected by mutation
       const specifications = {
-        title: product.title || '제품명 없음',
+        title: product.title || product.name || '제품명 없음',
         price: product.price || 0,
         imageUrl: product.imageUrl || '',
         platform: selectedPlatform,
-        sourcePrice: (product.alibabaPrice || 0) * 1200, // Convert USD to KRW roughly
-        marginRate: product.estimatedMargin || 0,
+        sourcePrice: (product.alibabaPrice || 0) * 1200,
+        marginRate: product.estimatedMargin || 30,
         estimatedProfit: (product.price || 0) - ((product.alibabaPrice || 0) * 1200),
         category: product.category || '',
         brand: product.brand || '',
-        originalData: product
       };
 
-      const cartItem = await addToCart(productId, 1, specifications);
+      // Add to cart and wait for completion
+      await addToCart(productId, 1, specifications);
       
-      if (cartItem) {
-        // Show success message first
-        alert('Product successfully added');
-        
-        // Then redirect to cart page
+      // Wait a bit for refetch to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Then redirect
+      router.push('/cart');
+      
+    } catch (error: any) {
+      console.error('[AddToCart] Error:', error);
+      
+      if (error?.message?.includes('authenticated') || error?.message?.includes('Unauthorized')) {
+        router.push('/login?redirect=/');
+      } else {
         router.push('/cart');
       }
-    } catch (error) {
-      console.error('Failed to add to cart:', error);
-      alert('장바구니 추가에 실패했습니다. 다시 시도해 주세요.');
     } finally {
       setAddingToCart(null);
     }

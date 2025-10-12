@@ -16,6 +16,18 @@ const nextConfig = {
 			},
 			{
 				protocol: 'https',
+				hostname: 'placehold.co',
+				port: '',
+				pathname: '/**',
+			},
+			{
+				protocol: 'https',
+				hostname: 'placeholder.com',
+				port: '',
+				pathname: '/**',
+			},
+			{
+				protocol: 'https',
 				hostname: '*.coupang.com',
 				port: '',
 				pathname: '/**',
@@ -28,7 +40,43 @@ const nextConfig = {
 			},
 			{
 				protocol: 'https',
+				hostname: '*.pstatic.net',
+				port: '',
+				pathname: '/**',
+			},
+			{
+				protocol: 'https',
 				hostname: '*.11st.co.kr',
+				port: '',
+				pathname: '/**',
+			},
+			{
+				protocol: 'https',
+				hostname: '*.aliexpress.com',
+				port: '',
+				pathname: '/**',
+			},
+			{
+				protocol: 'https',
+				hostname: '*.alicdn.com',
+				port: '',
+				pathname: '/**',
+			},
+			{
+				protocol: 'https',
+				hostname: '*.1688.com',
+				port: '',
+				pathname: '/**',
+			},
+			{
+				protocol: 'https',
+				hostname: '*.alibaba.com',
+				port: '',
+				pathname: '/**',
+			},
+			{
+				protocol: 'http',
+				hostname: 'shopping.naver.com',
 				port: '',
 				pathname: '/**',
 			},

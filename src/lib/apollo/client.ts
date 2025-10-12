@@ -20,7 +20,7 @@ const getAuthToken = (): string | null => {
   if (typeof window === 'undefined') return null;
   
   try {
-    return localStorage.getItem('accessToken') || localStorage.getItem('jwtToken') || null;
+    return localStorage.getItem('jwtToken') || localStorage.getItem('accessToken') || null;
   } catch (error) {
     console.warn('Failed to access localStorage:', error);
     return null;
@@ -150,7 +150,6 @@ export const initAppWebSocketOnce = (): void => {
       if (!connected) {
         connected = true;
         clearTimeout(timeout);
-        console.log(`[WebSocket] Connected: ${url}`);
       }
     });
 
@@ -172,10 +171,10 @@ export const initAppWebSocketOnce = (): void => {
       }
 
       try {
-        const data = JSON.parse(event.data);
-        console.log('[WebSocket] Message received:', data);
+        JSON.parse(event.data);
+        // Message received
       } catch (error) {
-        console.log('[WebSocket] Raw message:', event.data);
+        // Raw message
       }
     });
 
@@ -213,10 +212,12 @@ export const initAppWebSocketOnce = (): void => {
 const authLink = setContext((_, { headers }) => {
   const token = getAuthToken();
   
+  console.log('[Apollo] Auth link - Token exists:', !!token);
+  
   return {
     headers: {
       ...headers,
-      ...(token && { authorization: `Bearer ${token}` }),
+      authorization: token ? `Bearer ${token}` : '',
     },
   };
 });
@@ -254,10 +255,7 @@ const errorLink = onError((errorResponse) => {
           userVar(null);
           
           // Redirect to login if needed
-          if (!window.location.pathname.includes('/auth')) {
-            console.log('Authentication required, redirecting to login');
-            // You can trigger your login redirect here
-          }
+          // You can trigger your login redirect here if not on auth pages
         }
       }
     });
@@ -265,18 +263,16 @@ const errorLink = onError((errorResponse) => {
 
   if (networkError) {
     console.error(`[Network error]: ${networkError.message}`);
-    
-    // Handle specific network errors
-    if (networkError.message?.includes('fetch')) {
-      console.warn('Network connectivity issue detected');
-    }
   }
 });
 
 // Request logging link (development only)
 const requestLoggerLink = new ApolloLink((operation, forward) => {
   if (process.env.NODE_ENV === 'development') {
-    console.log(`[Apollo] Starting request for ${operation.operationName}`);
+    console.log(`[Apollo] Request: ${operation.operationName}`, {
+      variables: operation.variables,
+      hasAuthHeader: !!(operation.getContext().headers?.authorization)
+    });
   }
   
   return forward(operation);

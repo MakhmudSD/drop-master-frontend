@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '@/types';
+import { userVar } from '@/lib/apollo/store';
 
 interface AuthContextType {
   user: User | null;
@@ -28,61 +29,92 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+// Helper to update user state in all systems
+const syncUserState = (userData: User | null, setUser: React.Dispatch<React.SetStateAction<User | null>>) => {
+  // Update React state
+  setUser(userData);
+  
+  // Update Apollo reactive variable
+  userVar(userData);
+  
+  // Update localStorage
+  if (userData) {
+    localStorage.setItem('user', JSON.stringify(userData));
+  } else {
+    localStorage.removeItem('user');
+    localStorage.removeItem('jwtToken');
+    localStorage.removeItem('accessToken');
+  }
+};
 
-  // Handle initial auth check
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  // Initialize user from localStorage immediately (synchronously)
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window === 'undefined') return null;
+    
+    try {
+      const storedUser = localStorage.getItem('user');
+      const token = localStorage.getItem('jwtToken');
+      
+      if (storedUser && token) {
+        const userData = JSON.parse(storedUser);
+        userVar(userData); // Immediately sync with Apollo
+        return userData;
+      }
+    } catch (e) {
+      console.warn('[AuthContext] Failed to load cached user');
+    }
+    
+    return null;
+  });
+  
+  // Set loading to false immediately if we have user from localStorage
+  const [loading, setLoading] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    const hasToken = !!localStorage.getItem('jwtToken');
+    const hasUser = !!localStorage.getItem('user');
+    // If we have both, we can consider loading complete immediately
+    return !(hasToken && hasUser);
+  });
+
+  // Verify token with backend (background check, doesn't block UI)
   useEffect(() => {
-    const checkAuth = async () => {
+    const verifyAuth = async () => {
       try {
-        // First check if we have user data in localStorage (from OAuth callback)
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-          try {
-            const userData = JSON.parse(storedUser);
-            setUser(userData);
-            setLoading(false);
-            return;
-          } catch (e) {
-            localStorage.removeItem('user');
-          }
+        const token = localStorage.getItem('jwtToken');
+        
+        if (!token) {
+          setLoading(false);
+          return;
         }
 
-        // If no stored user, check token with backend
-        const token = localStorage.getItem('jwtToken');
-        if (token) {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/auth/profile`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          });
+        // Verify token with backend
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/auth/profile`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
           
-          if (response.ok) {
-            const userData = await response.json();
-            if (userData.success && userData.data) {
-              setUser(userData.data.user);
-              // Store user data for future use
-              localStorage.setItem('user', JSON.stringify(userData.data.user));
-            } else {
-              localStorage.removeItem('jwtToken');
-              localStorage.removeItem('user');
-            }
+          if (result.success && result.data?.user) {
+            syncUserState(result.data.user, setUser);
           } else {
-            localStorage.removeItem('jwtToken');
-            localStorage.removeItem('user');
+            syncUserState(null, setUser);
           }
+        } else {
+          syncUserState(null, setUser);
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
-        localStorage.removeItem('jwtToken');
-        localStorage.removeItem('user');
+        console.error('[AuthContext] Backend verification failed:', error);
+        // Don't clear user on network error - keep cached user
       } finally {
         setLoading(false);
       }
     };
 
-    checkAuth();
+    verifyAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -98,15 +130,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       const data = await response.json();
       
-      if (data.success) {
+      if (data.success && data.data) {
         const { user: userData, token } = data.data;
         localStorage.setItem('jwtToken', token);
-        setUser(userData);
+        syncUserState(userData, setUser);
       } else {
         throw new Error(data.message || 'Login failed');
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('[AuthContext] Login error:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -126,15 +158,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       const data = await response.json();
       
-      if (data.success) {
+      if (data.success && data.data) {
         const { user: newUser, token } = data.data;
         localStorage.setItem('jwtToken', token);
-        setUser(newUser);
+        syncUserState(newUser, setUser);
       } else {
         throw new Error(data.message || 'Registration failed');
       }
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('[AuthContext] Registration error:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -142,9 +174,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('jwtToken');
-    localStorage.removeItem('user');
+    console.log('[AuthContext] Logging out...');
+    
+    // Clear all auth data
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('jwtToken');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('user');
+    }
+    
+    // Clear state
     setUser(null);
+    userVar(null);
+    
+    // Redirect to homepage
+    if (typeof window !== 'undefined') {
+      window.location.href = '/';
+    }
   };
 
   const googleLogin = () => {

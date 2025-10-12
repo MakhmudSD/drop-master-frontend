@@ -1,224 +1,379 @@
 # Drop Master Frontend
 
-AI 기반 자동화 드롭쉬핑 플랫폼의 프론트엔드 애플리케이션입니다.
+Modern Next.js-based frontend for automated dropshipping management platform. Browse products from multiple e-commerce platforms, manage cart, and automate your dropshipping business.
 
-## 기술 스택
+## 🚀 Features
 
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **UI Components**: Headless UI, Heroicons
-- **Forms**: React Hook Form + Zod
-- **HTTP Client**: Axios
-- **Icons**: Lucide React
-- **Animations**: Framer Motion
+- **Multi-Platform Product Discovery**: Browse products from Naver, Coupang, 11st, AliExpress, and Alibaba
+- **Real-time Product Data**: Live fetching with automatic fallback mechanisms
+- **Authentication**: JWT-based auth with OAuth2 (Google, Kakao, Naver)
+- **Shopping Cart**: Add products, update quantities, manage orders
+- **Product Management**: Complete product lifecycle management
+- **Automation Dashboard**: Configure automated product syncing
+- **Internationalization**: Korean/English language support
+- **Responsive Design**: Works perfectly on desktop, tablet, and mobile
 
-## 주요 기능
+## 📋 Prerequisites
 
-### 🏠 홈페이지
-- 히어로 섹션
-- 기능 소개
-- 인기 상품 실시간 표시
-- 플랫폼별 상품 필터링
+- Node.js v18 or higher
+- npm or yarn
+- Drop Master Backend running (see backend README)
 
-### 🔐 인증
-- 로그인/회원가입 페이지
-- JWT 토큰 기반 인증
-- 자동 로그인 상태 관리
+## 🛠️ Installation
 
-### 🛍️ 상품 관리
-- 상품 목록 및 상세 보기
-- 실시간 상품 데이터 표시
-- 플랫폼별 상품 필터링
-- 상품 통계 대시보드
-
-### 🤖 자동화
-- 자동화 설정 관리
-- 스케줄링 설정
-- 자동 번역 설정
-
-### 📊 분석
-- 상품 성과 분석
-- 수익성 분석
-- 트렌드 분석
-
-## 설치 및 실행
-
-### 1. 의존성 설치
+### 1. Install Dependencies
 ```bash
 npm install
+# or
+yarn install
 ```
 
-### 2. 환경 변수 설정
+### 2. Environment Configuration
 ```bash
-cp env.local .env.local
+cp .env.example .env
 ```
 
-`.env.local` 파일에 다음 변수를 설정하세요:
+### 3. Configure Environment Variables
+
+Edit `.env` file:
 
 ```env
+# REQUIRED: Backend API URLs
 NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_API_URL_GRAPHQL=http://localhost:3001/graphql
+
+# REQUIRED: OpenAI for translation
+OPENAI_API_KEY=your_openai_api_key_here
+
+# REQUIRED: Session secret
+SESSION_SECRET=your_session_secret_here
+
+# RECOMMENDED: At least one OAuth provider
+# Google OAuth
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
+NEXT_GOOGLE_CALLBACK_URL=http://localhost:3001/api/auth/google/callback
+
+# Kakao OAuth
+NEXT_PUBLIC_KAKAO_CLIENT_ID=your_kakao_client_id
+NEXT_PUBLIC_KAKAO_CALLBACK_URL=http://localhost:3001/api/auth/kakao/callback
+
+# Naver OAuth
+NEXT_PUBLIC_NAVER_CLIENT_ID=your_naver_client_id
+NEXT_PUBLIC_NAVER_CALLBACK_URL=http://localhost:3001/api/auth/naver/callback
+
+# OPTIONAL: Shopping platform APIs
+NAVER_SHOPPING_API_KEY=your_api_key
+COUPANG_API_KEY=your_api_key
+ELEVENST_API_KEY=your_api_key
 ```
 
-### 3. 개발 서버 실행
+## 🏃 Running the Application
+
+### Development Mode
 ```bash
 npm run dev
+# or
+yarn dev
 ```
 
-브라우저에서 [http://localhost:3000](http://localhost:3000)을 열어 확인하세요.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 4. 프로덕션 빌드
+### Production Build
 ```bash
 npm run build
 npm start
+# or
+yarn build
+yarn start
 ```
 
-## 프로젝트 구조
+### Linting
+```bash
+npm run lint
+```
+
+## 📦 Project Structure
 
 ```
 src/
-├── app/                    # Next.js App Router
-│   ├── layout.tsx         # 루트 레이아웃
-│   ├── page.tsx           # 홈페이지
-│   ├── login/             # 로그인 페이지
-│   └── register/          # 회원가입 페이지
-├── components/            # 재사용 가능한 컴포넌트
-│   ├── Header.tsx         # 헤더 컴포넌트
-│   ├── Hero.tsx           # 히어로 섹션
-│   ├── Features.tsx       # 기능 소개
-│   ├── PopularProducts.tsx # 인기 상품
-│   └── Footer.tsx         # 푸터 컴포넌트
-├── contexts/              # React Context
-│   └── AuthContext.tsx    # 인증 컨텍스트
-├── lib/                   # 유틸리티 및 설정
-│   └── api.ts             # API 클라이언트
-├── types/                 # TypeScript 타입 정의
-│   └── index.ts           # 공통 타입
-└── styles/                # 스타일 파일
-    └── globals.css        # 전역 스타일
+├── app/                          # Next.js App Router
+│   ├── layout.tsx               # Root layout with providers
+│   ├── page.tsx                 # Homepage
+│   ├── login/                   # Login page
+│   ├── register/                # Registration page
+│   ├── cart/                    # Shopping cart
+│   ├── products/                # Products management
+│   ├── automation/              # Automation settings
+│   ├── profile/                 # User profile
+│   ├── scraping/                # Web scraping interface
+│   ├── search/                  # Product search
+│   ├── auth/callback/           # OAuth callback handler
+│   └── api/                     # API routes
+│       ├── products/            # Products API
+│       ├── search/              # Search API
+│       └── upload/              # Image upload API
+├── components/                   # Reusable components
+│   ├── Header.tsx               # Navigation header
+│   ├── Footer.tsx               # Footer
+│   ├── PopularProducts.tsx      # Popular products display
+│   ├── EditProductModal.tsx     # Product editing modal
+│   ├── OAuthButtons.tsx         # Social login buttons
+│   └── ...
+├── contexts/                    # React contexts
+│   └── AuthContext.tsx          # Authentication state
+├── hooks/                       # Custom React hooks
+│   ├── useCart.ts               # Cart management
+│   ├── useProducts.ts           # Products fetching
+│   ├── useUser.ts               # User state
+│   └── ...
+├── lib/                         # Libraries and utilities
+│   └── apollo/                  # Apollo Client
+│       ├── client.ts            # Apollo configuration
+│       ├── queries/             # GraphQL queries
+│       ├── mutations/           # GraphQL mutations
+│       └── store.ts             # Reactive variables
+├── types/                       # TypeScript type definitions
+└── middleware.ts                # Next.js middleware
 ```
 
-## 주요 컴포넌트
+## 🔧 Key Technologies
 
-### Header
-- 네비게이션 메뉴
-- 사용자 인증 상태 표시
-- 반응형 모바일 메뉴
+- **Next.js 15** - React framework with App Router
+- **React 19** - UI library
+- **TypeScript** - Type safety
+- **Tailwind CSS 4** - Styling
+- **Apollo Client** - GraphQL client
+- **Axios** - HTTP client
+- **React Hook Form** - Form management
+- **Zod** - Schema validation
+- **Framer Motion** - Animations
+- **Headless UI** - Accessible components
+- **i18next** - Internationalization
 
-### PopularProducts
-- 플랫폼별 상품 표시
-- 실시간 데이터 로딩
-- 상품 카드 레이아웃
-- 플랫폼 로고 표시
+## 🎯 Main Features Explained
 
-### AuthContext
-- 사용자 인증 상태 관리
-- 로그인/로그아웃 기능
-- 토큰 자동 관리
+### Authentication
+- Email/password registration and login
+- Social login (Google, Kakao, Naver)
+- JWT token management
+- Automatic token refresh
+- Protected routes
 
-## API 통신
+### Product Discovery
+- Browse products from multiple platforms
+- Platform-specific filtering (Naver, Coupang, 11st, AliExpress)
+- Time-based sorting (daily, weekly, monthly trends)
+- Real-time data fetching with fallback
 
-### API 클라이언트
-- Axios 기반 HTTP 클라이언트
-- 자동 토큰 첨부
-- 에러 처리 및 리다이렉션
+### Shopping Cart
+- Add products with one click
+- Update quantities
+- Remove items
+- Automatic price calculations
+- Profit margin display
 
-### 주요 API 엔드포인트
-- `authApi`: 인증 관련 API
-- `productsApi`: 상품 관리 API
-- `scrapingApi`: 스크래핑 API
+### Product Management
+- View all your products
+- Edit product details
+- Bulk operations
+- Status management
+- Platform-specific configurations
 
-## 스타일링
+### Automation
+- Schedule automated tasks
+- Configure automation rules
+- Monitor runs
+- Multi-platform support
 
-### Tailwind CSS
-- 유틸리티 퍼스트 CSS 프레임워크
-- 반응형 디자인
-- 다크 모드 지원
+## 🌐 API Integration
 
-### 컴포넌트 스타일
-- 일관된 디자인 시스템
-- 재사용 가능한 스타일 클래스
-- 접근성 고려
+### GraphQL (Primary)
+```typescript
+import { useProducts } from '@/hooks/useProducts';
 
-## 상태 관리
+const { products, loading, error } = useProducts({
+  platform: 'naver',
+  limit: 20,
+  query: '인기상품',
+  timeFilter: 'daily'
+});
+```
 
-### React Context
-- 전역 상태 관리
-- 사용자 인증 상태
-- 테마 설정
+### REST (Alternative)
+```typescript
+import { useProductsRest } from '@/hooks/useProductsRest';
 
-### 로컬 상태
-- React useState/useEffect
-- 컴포넌트별 상태 관리
-- 폼 상태 관리
+const { products, loading } = useProductsRest({
+  platform: 'coupang',
+  limit: 20
+});
+```
 
-## 성능 최적화
+## 🎨 Styling
 
-### Next.js 최적화
-- 자동 코드 분할
-- 이미지 최적화
-- 서버 사이드 렌더링
+- **Tailwind CSS 4**: Utility-first styling
+- **Responsive Design**: Mobile-first approach
+- **Dark Mode Ready**: Theme support with next-themes
+- **Accessibility**: WCAG guidelines followed
 
-### React 최적화
-- 컴포넌트 메모이제이션
-- 불필요한 리렌더링 방지
-- 지연 로딩
+## 🌍 Internationalization
 
-## 접근성
+Currently supports:
+- Korean (ko) - Default
+- English (en)
 
-### WCAG 가이드라인
-- 키보드 네비게이션
-- 스크린 리더 지원
-- 색상 대비 고려
+```typescript
+import { useI18n } from '@/hooks/useI18n';
 
-### 반응형 디자인
-- 모바일 우선 설계
-- 다양한 화면 크기 지원
-- 터치 친화적 인터페이스
+const { t, language, changeLanguage } = useI18n();
+```
 
-## 개발 도구
+## 🔒 Security
 
-### 코드 품질
-- ESLint + Prettier
-- TypeScript strict mode
-- Husky pre-commit hooks
+- Environment variables protection
+- JWT token storage and management
+- CORS configuration
+- Input validation
+- XSS protection
 
-### 개발 환경
-- Hot reload
-- TypeScript 타입 체킹
-- Tailwind CSS IntelliSense
+## 🚀 Deployment
 
-## 배포
-
-### Vercel (권장)
+### Vercel (Recommended)
 ```bash
-# Vercel CLI 설치
+# Install Vercel CLI
 npm i -g vercel
 
-# 배포
+# Deploy
 vercel
 ```
 
+### Environment Variables for Production
+
+Set these in your deployment platform:
+- `NEXT_PUBLIC_API_URL` - Your backend API URL
+- `NEXT_PUBLIC_API_URL_GRAPHQL` - Your GraphQL endpoint
+- All OAuth client IDs (NEXT_PUBLIC_* variables)
+- API keys
+
 ### Docker
 ```bash
-# Docker 이미지 빌드
+# Build
 docker build -t drop-master-frontend .
 
-# Docker 컨테이너 실행
+# Run
 docker run -p 3000:3000 drop-master-frontend
 ```
 
-### 환경 변수
-프로덕션 환경에서는 다음 환경 변수를 설정하세요:
-- `NEXT_PUBLIC_API_URL`: 백엔드 API URL
+## 🐛 Troubleshooting
 
-## 브라우저 지원
+### "Backend not reachable" Error
+- Verify backend is running at `http://localhost:3001`
+- Check `NEXT_PUBLIC_API_URL` in `.env`
+- Test backend health: `curl http://localhost:3001/api/health`
 
-- Chrome (최신 2개 버전)
-- Firefox (최신 2개 버전)
-- Safari (최신 2개 버전)
-- Edge (최신 2개 버전)
+### OAuth Login Not Working
+- Verify OAuth client IDs are correct
+- Check callback URLs match OAuth provider settings
+- Backend must be running for OAuth callbacks
 
-## 라이선스
+### Products Not Loading
+- Check backend GraphQL endpoint: `http://localhost:3001/graphql`
+- Verify you're logged in (JWT token exists)
+- Check browser console for errors
 
-MIT License
+### Cart Empty After Adding Products
+- Clear browser cache and localStorage
+- Logout and login again
+- Check browser console for GraphQL errors
+
+### Hydration Errors
+- Clear `.next` folder: `rm -rf .next`
+- Restart dev server
+- Clear browser cache
+
+## 🧪 Development
+
+### Clear Cache
+```bash
+rm -rf .next
+npm run dev
+```
+
+### Check for TypeScript Errors
+```bash
+npx tsc --noEmit
+```
+
+### View Build Analysis
+```bash
+npm run build
+```
+
+## 📱 Browser Support
+
+- Chrome (latest 2 versions)
+- Firefox (latest 2 versions)
+- Safari (latest 2 versions)
+- Edge (latest 2 versions)
+
+## 🎓 Getting Started
+
+1. **Start Backend**: Follow backend README to start the API server
+2. **Install Frontend**: Run `npm install`
+3. **Configure .env**: Copy `.env.example` and add your credentials
+4. **Start Dev Server**: Run `npm run dev`
+5. **Open Browser**: Go to `http://localhost:3000`
+6. **Register/Login**: Create an account or use OAuth
+7. **Browse Products**: Explore products from different platforms
+8. **Add to Cart**: Click "상품 등록하기" to add products
+9. **Manage Cart**: View and manage your cart at `/cart`
+
+## 📚 Important Notes
+
+### OAuth Setup
+If using OAuth (Google, Kakao, Naver):
+1. Register your app on the provider's developer console
+2. Add authorized origins: `http://localhost:3000`
+3. Add authorized redirect URIs (backend callback URLs)
+4. Copy client IDs to your `.env` file
+
+### Backend Dependency
+The frontend requires the backend to be running. Make sure:
+- Backend is running at `http://localhost:3001`
+- MongoDB is connected
+- GraphQL endpoint is accessible at `http://localhost:3001/graphql`
+
+### First Time Setup
+1. Make sure backend is running first
+2. Login or register an account
+3. OAuth login requires proper credentials configured
+
+## 🎯 Quick Start Commands
+
+```bash
+# Development
+npm install          # Install dependencies
+cp .env.example .env # Setup environment
+npm run dev          # Start dev server
+
+# Production
+npm run build        # Build for production
+npm start            # Start production server
+```
+
+## 📄 License
+
+UNLICENSED - Private Project
+
+## 🆘 Support
+
+For issues:
+1. Check backend is running
+2. Verify environment variables
+3. Check browser console for errors
+4. Review network tab for failed requests
+5. Refer to troubleshooting section above
+
+---
+
+**Happy Dropshipping! 🚀**

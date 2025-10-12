@@ -1,11 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useI18n } from '@/hooks/useI18n';
 import Header from '@/components/Header';
-import { User, LogOut, Settings, Package, BarChart3, CreditCard, Bell, Shield, HelpCircle } from 'lucide-react';
+import {
+  User,
+  LogOut,
+  Settings,
+  Package,
+  BarChart3,
+  CreditCard,
+  Bell,
+  Shield,
+  HelpCircle,
+} from 'lucide-react';
 
 export default function ProfilePage() {
   const { user, loading, logout } = useAuth();
@@ -13,34 +23,38 @@ export default function ProfilePage() {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
-
-  const handleLogout = async () => {
+  const handleLogout = () => {
     setIsLoggingOut(true);
-    try {
-      await logout();
-      router.push('/');
-    } catch (error) {
-      console.error('Logout failed:', error);
-    } finally {
-      setIsLoggingOut(false);
-    }
+    logout(); // logout() already handles redirect
   };
 
+  // 🌀 Loading state
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">로딩 중...</p>
+        </div>
       </div>
     );
   }
 
+  // ⚠️ No user (unauthenticated)
   if (!user) {
-    return null;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+          로그인 상태가 아닙니다
+        </h2>
+        <button
+          onClick={() => router.push('/login')}
+          className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+        >
+          로그인 하러 가기
+        </button>
+      </div>
+    );
   }
 
   const menuItems = [
@@ -49,56 +63,56 @@ export default function ProfilePage() {
       title: '프로필 정보',
       description: '개인정보 및 계정 설정',
       icon: User,
-      href: '/profile/info'
+      href: '/profile/info',
     },
     {
       id: 'products',
       title: '내 상품',
       description: '등록한 상품 관리',
       icon: Package,
-      href: '/profile/products'
+      href: '/profile/products',
     },
     {
       id: 'analytics',
       title: '분석',
       description: '판매 분석 및 통계',
       icon: BarChart3,
-      href: '/profile/analytics'
+      href: '/profile/analytics',
     },
     {
       id: 'billing',
       title: '결제 정보',
       description: '구독 및 결제 관리',
       icon: CreditCard,
-      href: '/profile/billing'
+      href: '/profile/billing',
     },
     {
       id: 'notifications',
       title: '알림 설정',
       description: '알림 및 이메일 설정',
       icon: Bell,
-      href: '/profile/notifications'
+      href: '/profile/notifications',
     },
     {
       id: 'security',
       title: '보안',
       description: '비밀번호 및 보안 설정',
       icon: Shield,
-      href: '/profile/security'
+      href: '/profile/security',
     },
     {
       id: 'help',
       title: '도움말',
       description: 'FAQ 및 고객지원',
       icon: HelpCircle,
-      href: '/profile/help'
-    }
+      href: '/profile/help',
+    },
   ];
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header user={user} />
-      
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -113,12 +127,18 @@ export default function ProfilePage() {
               <User className="w-8 h-8 text-purple-600" />
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-semibold text-gray-900">{user.name || '사용자'}</h2>
-              <p className="text-gray-500">{user.email || 'user@example.com'}</p>
+              <h2 className="text-xl font-semibold text-gray-900">
+                {user?.name || '사용자'}
+              </h2>
+              <p className="text-gray-500">
+                {user?.email || 'user@example.com'}
+              </p>
             </div>
             <div className="text-right">
               <div className="text-sm text-gray-500">멤버십</div>
-              <div className="text-lg font-semibold text-purple-600">프리미엄</div>
+              <div className="text-lg font-semibold text-purple-600">
+                프리미엄
+              </div>
             </div>
           </div>
         </div>
@@ -136,7 +156,9 @@ export default function ProfilePage() {
                   <item.icon className="w-6 h-6 text-gray-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">{item.title}</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    {item.title}
+                  </h3>
                   <p className="text-sm text-gray-500">{item.description}</p>
                 </div>
               </div>

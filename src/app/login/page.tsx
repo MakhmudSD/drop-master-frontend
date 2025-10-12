@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
@@ -11,17 +11,21 @@ import styles from './login.module.scss';
 export default function LoginPage() {
   const { login, user, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Get redirect URL from query params
+  const redirectUrl = searchParams.get('redirect') || '/';
+
   // Redirect if already logged in
   useEffect(() => {
     if (!loading && user) {
-      router.push('/');
+      router.push(redirectUrl);
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, redirectUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,10 +34,11 @@ export default function LoginPage() {
 
     try {
       await login(formData.email, formData.password);
-      // Assuming the login function throws an error on failure
-      // If it doesn't, you may need to modify the login function to return a success indicator
-    } catch {
-      setError('로그인 중 오류가 발생했습니다.');
+      // After successful login, redirect to specified URL
+      router.push(redirectUrl);
+    } catch (err) {
+      setError('이메일 또는 비밀번호가 올바르지 않습니다.');
+      console.error('Login error:', err);
     } finally {
       setIsLoading(false);
     }
